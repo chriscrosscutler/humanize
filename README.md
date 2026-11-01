@@ -17,6 +17,7 @@
   <img alt="Claude Code skill" src="https://img.shields.io/badge/Claude_Code-skill-4A47F5?style=flat-square&labelColor=0A1A8C">
   <img alt="102 rules" src="https://img.shields.io/badge/rules-102-4A47F5?style=flat-square&labelColor=0A1A8C">
   <img alt="14 registers" src="https://img.shields.io/badge/registers-14-4A47F5?style=flat-square&labelColor=0A1A8C">
+  <img alt="Apache 2.0 license" src="https://img.shields.io/badge/license-Apache_2.0-4A47F5?style=flat-square&labelColor=0A1A8C">
   <img alt="Node, no dependencies" src="https://img.shields.io/badge/Node-no_dependencies-7A2CF0?style=flat-square&labelColor=0A1A8C">
 </p>
 
@@ -182,6 +183,11 @@ node --test
 ```
 
 The catalog test fails when `references/patterns.md` and `scripts/rules.json` drift apart.
+
+## License
+
+[Apache 2.0](LICENSE), copyright 2026 Chockstone Labs LLC. A copy or fork keeps the
+[NOTICE](NOTICE) file. The license does not cover the Chockstone Labs name or logo.
 
 <br>
 
