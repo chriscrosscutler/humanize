@@ -44,11 +44,12 @@ humanize: 24 block, 5 warn in 1 file, 136 words. Exit 1.
 And rewritten, with only the facts the draft already had:
 
 ```diff
-- In today's fast-paced digital world, managing your photos can feel overwhelming. That's where
-- Capysort comes in — a smart, seamless solution designed with you in mind.
+- In today's fast-paced digital world, managing your photos can feel
+- overwhelming. That's where Capysort comes in — a smart, seamless solution
+- designed with you in mind.
 - No subscriptions. No cloud. Just your photos.
-+ Capysort groups the duplicates in your photo library. Your photos never leave your device,
-+ and there is no subscription.
++ Capysort groups the duplicates in your photo library. Your photos never
++ leave your device, and there is no subscription.
 ```
 
 The catalog has seven families:
