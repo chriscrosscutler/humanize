@@ -1,0 +1,4 @@
+{
+  "$comment": "The skill quotes every tell on purpose; its own files are not copy.",
+  "exempt": ["SKILL.md", "references/**", "scripts/**", "tests/**"]
+}

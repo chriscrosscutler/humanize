@@ -1,0 +1,4 @@
+This commit introduces a comprehensive refactor of the sync engine, ensuring robustness and improving overall maintainability.
+
+- Streamlined the code
+- Enhanced readability

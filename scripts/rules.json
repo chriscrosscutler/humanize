@@ -1,0 +1,715 @@
+{
+  "$comment": "Pattern data for scan.mjs; references/patterns.md documents every id. Regexes compile with the u flag (giu, or gu when caseSensitive): escape only syntax characters, and double every backslash in JSON. Directory globs need **/ to match at any depth.",
+  "version": 1,
+  "registers": {
+    "prose": { "desc": "Default for pasted text and unmatched paths." },
+    "chat": { "desc": "Messages to a person: Slack, DMs, forum replies." },
+    "docs": { "desc": "README, docs/, guides, reference." },
+    "essay": { "desc": "Blog posts, articles, long-form." },
+    "landing": { "desc": "Marketing site pages.", "userFacing": true },
+    "store": { "desc": "App Store and Play metadata.", "userFacing": true },
+    "ui": { "desc": "In-app strings: labels, alerts, onboarding, errors.", "userFacing": true },
+    "release": { "desc": "Release notes, What's New, CHANGELOG.", "userFacing": true },
+    "email": { "desc": "Product and outreach email.", "userFacing": true },
+    "social": { "desc": "Posts for X, LinkedIn, Bluesky, Threads.", "userFacing": true },
+    "commit": { "desc": "Commit messages.", "dev": true },
+    "pr": { "desc": "Pull request titles and bodies.", "dev": true },
+    "comment": { "desc": "Code comments and docstrings.", "dev": true },
+    "legal": { "desc": "Privacy policy, terms, EULA. Findings cap at warn; never rewrite without counsel.", "cap": "warn" }
+  },
+  "paths": [
+    ["**/fastlane/**/release_notes.txt", "release"],
+    ["**/fastlane/metadata/**", "store"],
+    ["**/{app-store,appstore,app_store,store-listing,play-store,playstore}/**", "store"],
+    ["**/.github/{pull_request_template,PULL_REQUEST_TEMPLATE}*", "pr"],
+    ["**/.github/PULL_REQUEST_TEMPLATE/**", "pr"],
+    ["{COMMIT_EDITMSG,MERGE_MSG,SQUASH_MSG,TAG_EDITMSG}", "commit"],
+    ["{privacy,terms,eula,tos,legal,cookies,privacy-policy,privacy_policy,terms-of-service,terms_of_service,terms-of-use,acceptable-use,dpa,disclaimer}{,.md,.mdx,.txt,.html,.htm,.astro}", "legal"],
+    ["**/{legal,privacy,terms}/**/*.{md,mdx,txt,html,htm,astro}", "legal"],
+    ["{CHANGELOG,CHANGES,HISTORY,RELEASE_NOTES,RELEASE-NOTES,RELEASES,WHATS_NEW,WHATSNEW,WHATS-NEW,NEWS}{,.md,.mdx,.txt,.markdown}", "release"],
+    ["**/{release-notes,release_notes,releasenotes,changelog,changelogs,whats-new,whatsnew}/**", "release"],
+    ["**/{emails,email,mail,mails,mjml}/**", "email"],
+    ["*.mjml", "email"],
+    ["**/{site,www,landing,website,marketing,homepage,web,public,pages}/**/*.{html,htm,astro,md,mdx,njk,hbs,liquid,ejs}", "landing"],
+    ["*.{astro,html,htm,xhtml}", "landing"],
+    ["*.{tsx,jsx,vue,svelte,swift,xcstrings,strings,stringsdict,arb}", "ui"],
+    ["**/{locales,locale,i18n,lang,langs,languages,translations,translation,messages,intl,l10n}/**", "ui"],
+    ["**/docs/**", "docs"],
+    ["*.{md,mdx,markdown,txt,text,rst,adoc}", "docs"],
+    ["{README,CONTRIBUTING,AUTHORS,SECURITY,SUPPORT,CODE_OF_CONDUCT}", "docs"],
+    ["*.{ts,js,mjs,cjs,mts,cts}", "ui"]
+  ],
+  "skip": [
+    "**/node_modules/**", "**/bower_components/**", "**/dist/**", "**/build/**", "**/out/**", "**/.output/**",
+    "**/.next/**", "**/.nuxt/**", "**/.svelte-kit/**", "**/.astro/**", "**/.vercel/**", "**/.netlify/**",
+    "**/coverage/**", "**/.turbo/**", "**/.cache/**", "**/.parcel-cache/**", "**/storybook-static/**", "**/Pods/**",
+    "**/Carthage/**", "**/DerivedData/**", "**/.build/**", "**/.swiftpm/**", "**/xcuserdata/**", "**/*.xcassets/**",
+    "**/*.xcodeproj/**", "**/*.xcworkspace/**", "**/vendor/**", "**/third_party/**", "**/third-party/**",
+    "**/.venv/**", "**/venv/**", "**/__pycache__/**", "**/target/**", "**/.gradle/**", "**/.git/**", "**/.claude/**",
+    "**/.cursor/**", "**/.vscode/**", "**/.idea/**", "*.lock", "*.lockb", "package-lock.json", "pnpm-lock.yaml",
+    "npm-shrinkwrap.json", "Package.resolved", "*.min.*", "*.map", "*.snap", "**/__snapshots__/**", "*.generated.*",
+    "*.gen.*", "**/generated/**", "**/__generated__/**", "*.d.ts", "*.pb.*", "*.g.dart",
+    "**/{fixtures,__fixtures__,testdata,test-data,mocks,__mocks__,stubs,seeds}/**",
+    "**/{test,tests,__tests__,spec,specs,e2e,cypress,playwright}/**", "*.{test,spec,stories,story}.*",
+    "*{Tests,Test,Spec}.swift", "**/*{Tests,UITests}/**", "{CLAUDE,AGENTS,GEMINI,HANDOFF,MEMORY,TODO}.md",
+    "{LICENSE,LICENCE,COPYING,NOTICE}{,.md,.txt}", "{robots,ads,app-ads,humans,security,llms,llms-full}.txt", "{requirements,constraints}*.txt", "CMakeLists.txt", "**/.github/copilot-instructions.md", "**/audits/humanize-*.md", "**/humanize/{scan,hook}.mjs", "**/skills/humanize/**",
+    ".humanize.json"
+  ],
+  "rules": [
+    {
+      "id": "C1", "family": "C", "kind": "tell", "name": "Assistant opener", "tier": "block",
+      "registers": { "chat": "warn", "social": "warn" },
+      "at": "sentence-start",
+      "regex": "(?:Certainly|Absolutely|Of course|Sure thing|Sure|Gladly|Great question|Good question|Excellent question|Great catch|Good catch|Great point|Good point|Great idea|What a great question)!|(?:Great|Good|Excellent|Fantastic|Interesting) question[.,]|(?:Certainly|Absolutely)[,.](?=\\s+(?:here|I|let|below|the following))",
+      "fix": "Delete the opener and start with the answer."
+    },
+    {
+      "id": "C2", "family": "C", "kind": "tell", "name": "Sycophantic agreement or apology", "tier": "block",
+      "registers": { "chat": "warn" },
+      "regex": "\\byou(?:['’]re| are) (?:absolutely|completely|totally|entirely|exactly|quite) (?:right|correct)\\b|\\bI (?:sincerely )?apologi[sz]e for (?:the|my) (?:confusion|oversight|error|mistake|misunderstanding)\\b|\\bthank you for (?:pointing (?:that|this) out|catching (?:that|this))\\b|\\bthat(?:['’]s| is) (?:a |an )?(?:great|excellent|fantastic|brilliant|insightful) (?:question|point|observation|catch)\\b",
+      "fix": "Cut the agreement or apology; state the correction itself."
+    },
+    {
+      "id": "C3", "family": "C", "kind": "tell", "name": "Assistant sign-off", "tier": "block",
+      "registers": { "chat": "info", "email": "warn" },
+      "regex": "\\b(?:I )?hope (?:this|that|it|the above) (?:helps|was helpful|is helpful|clarifies|answers)\\b|\\banything else (?:I can|you(?:['’]d| would) like me to) (?:help|assist|do|explain)\\b|\\bwould you like me to\\b|\\bdo you want me to\\b|\\bshall I (?:go ahead|proceed|continue|also)\\b|\\bI(?:['’]d| would) be (?:happy|glad|delighted) to (?:help|assist|explain|elaborate|walk you through|provide)\\b|\\b(?:happy|glad) to help\\b|\\bhappy (?:coding|writing|learning|building|reading)!|(?<=^|\\n|[.!?:]\\s+)want me to (?:continue|proceed|go ahead|add|expand|elaborate|give|write|draft|make|include)\\b|\\bshould I (?:continue|proceed|go ahead)(?:(?: with| and) [^.?!\\n]{1,40})?\\?|\\bshould I (?:expand|elaborate) on (?:this|that|it|any)\\b",
+      "fix": "Delete the sign-off; end on the last useful sentence."
+    },
+    {
+      "id": "C4", "family": "C", "kind": "tell", "name": "Offer-more closer", "tier": "warn",
+      "registers": { "chat": "info" },
+      "regex": "\\blet me know if (?:you (?:have|need|want|would like)|you['’]d like|there(?:['’]s| is) anything|I can|anything)\\b|\\bfeel free to (?:reach out|ask|contact|let me know|get in touch|drop|ping|share)\\b|\\b(?:don['’]t|do not) hesitate to (?:reach out|contact|ask|get in touch|let)\\b|\\bif you have any (?:other |further |more )?(?:questions|concerns|feedback)\\b",
+      "fix": "Cut it, or replace it with one concrete next step and who owns it."
+    },
+    {
+      "id": "C5", "family": "C", "kind": "tell", "name": "AI self-reference or knowledge cutoff", "tier": "block",
+      "regex": "\\bas an AI language model\\b|\\bas a large language model\\b|\\bas an AI(?: model| assistant| chatbot)?,? I\\b|\\bI(?:['’]m| am) (?:just |only )?(?:an AI|a language model|an artificial intelligence|a chatbot)\\b|\\b(?:as of|up to|since|until) my (?:last |latest |most recent )?(?:knowledge|training)(?: data)? (?:update|cutoff|cut-off)\\b|\\bmy knowledge (?:cutoff|cut-off)\\b|\\bI (?:can(?:not|['’]t)|don['’]t|do not|am unable to) (?:browse|access|search) the (?:internet|web)\\b|\\bI (?:don['’]t|do not) have (?:access to )?(?:real-time|current|live) (?:information|data|access)\\b|\\bI (?:can(?:not|['’]t)|am unable to) (?:provide|offer|give) (?:medical|legal|financial|professional) advice\\b",
+      "fix": "Delete it. The text speaks for whoever publishes it."
+    },
+    {
+      "id": "C6", "family": "C", "kind": "tell", "name": "Unfilled template placeholder", "tier": "block",
+      "registers": { "docs": "warn", "pr": "warn", "comment": "off" },
+      "caseSensitive": true,
+      "regex": "\\[(?:(?:Your|Insert|Enter|Add|Recipient['’]?s?|Client['’]?s?|Customer['’]?s?|Company|Product|Business|Brand|Organi[sz]ation|Team|Manager['’]?s?|Hiring Manager['’]?s?|Contact|Sender['’]?s?)(?: [^\\]\\n]{1,30})?|Name|First Name|Last Name|Full Name|Date|Time|Location|Address|Phone(?: Number)?|Email(?: Address)?|Job Title|Position|URL|Link|Website|Amount|Price|Topic|Industry|City|Country|Event|Signature|(?:Article|Source|Citation|Reference|Statistic|Quote|Testimonial|Customer Quote)(?: (?:Title|Name|URL|Link|\\d{1,2}))?|Describe [^\\]\\n]{1,60})\\](?![(:\\[])|\\b\\d{4}-XX-XX\\b|\\b(?:INSERT|PASTE)_[A-Z0-9_]+\\b",
+      "fix": "Fill in the real value or remove the sentence."
+    },
+    {
+      "id": "C7", "family": "C", "kind": "tell", "name": "Chat interface artifact", "tier": "block",
+      "on": "src",
+      "regex": ":?contentReference\\[oaicite:\\d+\\](?:\\{index=\\d+\\})?|\\boai_citation(?::\\d+)?|\\boaicite(?::\\d+)?|\\battributableIndex\\b|\\bciteturn\\d+\\w*|\\bturn\\d+(?:search|news|view|file|fetch|image|product|navlist)\\d+\\b|\\bfilecite\\w*|【\\d+(?::\\d+)?†[^】\\n]{0,80}】|\\[cite_start\\]|\\[cite: ?\\d+(?:, ?\\d+)*\\]|\\[span_\\d+\\]\\((?:start|end)_span\\)|utm_source=(?:chatgpt\\.com|chatgpt|openai|copilot\\.com|perplexity(?:\\.ai)?|claude\\.ai|gemini)|(?<![^\\n])[ \\t]*(?:ChatGPT|Claude|Gemini|Copilot|Perplexity|Grok|You) (?:said|responded|replied):[ \\t]*(?=\\n|$)",
+      "fix": "Delete the artifact; restore the real link or citation by hand."
+    },
+    {
+      "id": "C8", "family": "C", "kind": "tell", "name": "Revision announcement", "tier": "block",
+      "registers": { "chat": "info", "email": "warn" },
+      "at": "sentence-start",
+      "regex": "(?:Here(?:['’]s| is| are)|Below (?:is|are)) (?:a |an |the |your |my )?(?:revised|rewritten|reworded|polished|improved|refined|tightened|cleaned-up|cleaner|shorter|more concise|concise|more professional|more polished|more natural|humani[sz]ed|proofread|edited)(?: and [\\p{L}-]+)? (?:version|draft|rewrite|edit|text|copy|paragraph|email|message|summary|README|description)\\b",
+      "fix": "Delete the announcement; deliver the text alone."
+    },
+    {
+      "id": "C9", "family": "C", "kind": "tell", "name": "Output announcement", "tier": "warn",
+      "registers": { "chat": "info", "docs": "info" },
+      "at": "sentence-start",
+      "regex": "Here(?:['’]s| is| are) (?:a |an |the |some |my )?(?:quick |brief |short |detailed |comprehensive |high-level |step-by-step )?(?:breakdown|overview|summary|rundown|recap|key (?:points|takeaways|features|improvements|changes|highlights)|main (?:points|changes|takeaways))\\b|Below (?:is|are) (?:a |an |the |some )?(?:breakdown|overview|summary|key)\\b",
+      "fix": "Drop the announcement and give the content."
+    },
+    {
+      "id": "C10", "family": "C", "kind": "tell", "name": "Prompt echo or edit commentary", "tier": "block",
+      "registers": { "chat": "info", "email": "warn" },
+      "regex": "\\bI(?:['’]ve| have) (?:rewritten|revised|reworded|polished|refined|tightened|edited|humani[sz]ed|adjusted|kept|preserved|maintained|made) (?:the|your|this|it|some|a few)\\b[^.!?\\n]{0,60}\\b(?:text|copy|draft|tone|wording|flow|clarity|readability|structure|meaning|original|version|email|paragraph)\\b|\\bas (?:you )?requested,? (?:here|below|I(?:['’]ve| have)|the following)\\b|\\bper your (?:request|instructions)\\b|\\b(?:key )?changes (?:I )?made:|\\bword count: ?\\d+|\\bto answer your question\\b|\\byou(?:['’]re| are) asking (?:about|whether|if|how|why)\\b",
+      "fix": "Delete the commentary about the edit; ship only the edited text."
+    },
+    {
+      "id": "C11", "family": "C", "kind": "tell", "name": "Source-availability hedge", "tier": "warn",
+      "registers": { "landing": "block", "store": "block", "release": "block", "social": "block" },
+      "regex": "\\bwhile (?:specific |detailed |exact )?(?:details|information|data) (?:are|is|remain|remains) (?:limited|scarce|sparse|not (?:widely |publicly )?available)\\b|\\b(?:is|are) not widely (?:documented|available|reported|known|covered)\\b|\\bin the (?:provided|available|supplied) (?:sources|search results|context|documents|text|information|materials)\\b|\\bbased on (?:the|my) (?:available|provided|current) (?:information|sources|data|context)\\b|\\bI (?:couldn['’]t|could not|was unable to|wasn['’]t able to) find (?:any )?(?:specific|reliable|detailed|recent|official|verified)\\b",
+      "fix": "Say what was checked and what is unknown, or cut the sentence."
+    },
+    {
+      "id": "C12", "family": "C", "kind": "tell", "name": "Reasoning narration", "tier": "block",
+      "registers": { "chat": "info", "docs": "warn", "comment": "warn", "commit": "warn", "pr": "warn" },
+      "regex": "\\blet(?:['’]s| me) think (?:this through|step by step|about (?:this|it) (?:step by step|carefully|systematically))\\b|\\b(?:here['’]s|this is) my (?:thought process|reasoning process|chain of thought)\\b|\\bto approach this systematically\\b|\\bworking through this (?:logically|step by step|systematically)\\b|\\blet me (?:break (?:this|it) down|walk you through (?:this|it|my))\\b|\\bbreaking (?:this|it) down(?: step by step)?:",
+      "fix": "Delete the narration; give the steps or the answer."
+    },
+    {
+      "id": "C13", "family": "C", "kind": "tell", "name": "Assurance and service voice", "tier": "warn",
+      "registers": { "chat": "info", "legal": "off" },
+      "regex": "\\bI (?:fully |completely |truly |genuinely )?understand (?:the importance of|your (?:frustration|concerns?))\\b|\\bI (?:genuinely|truly|really) (?:value|appreciate) (?:your|the)\\b|\\bI(?:['’]m| am) (?:fully |deeply )?committed to\\b|\\bI (?:can )?assure you\\b|\\brest assured\\b|\\bI have taken the time to\\b|\\bmy (?:aim|goal) (?:is|was) to (?:ensure|provide|deliver|help)\\b|\\bwe (?:value|appreciate) your (?:patience|understanding|feedback|business)\\b",
+      "fix": "Say what happened and what happens next, with a date or an owner."
+    },
+    {
+      "id": "P1", "family": "P", "kind": "tell", "name": "Era-setting opener", "tier": "block",
+      "registers": { "chat": "warn" },
+      "regex": "\\bin today['’]s (?:(?:fast-paced|fast paced|ever-changing|ever-evolving|rapidly changing|rapidly evolving|digital|modern|interconnected|hyper-connected|hyperconnected|competitive|busy|hectic|data-driven|tech-driven|technology-driven|always-on|online|evolving|dynamic|crowded|noisy|complex|increasingly [\\p{L}-]+) )+(?:world|age|era|landscape|society|environment|market|marketplace|economy|business world|workplace|climate|times)\\b|\\bin today['’]s world\\b|\\bin (?:the|an|this|today['’]s) (?:ever-evolving|ever-changing|rapidly evolving|rapidly changing|constantly evolving|constantly changing|fast-paced|fast-moving) (?:world|landscape|realm|field|space|era|industry|market|environment)\\b|\\bin an (?:era|age|world) (?:of|where|when|defined by|dominated by)\\b|\\bin the (?:modern|digital|information) (?:age|era)\\b|\\bnow more than ever\\b",
+      "fix": "Delete the scene-setting; open with the specific point."
+    },
+    {
+      "id": "P2", "family": "P", "kind": "tell", "name": "Testament or reminder puffery", "tier": "block",
+      "registers": { "chat": "warn", "docs": "warn", "comment": "warn", "commit": "warn", "pr": "warn" },
+      "regex": "\\b(?:stands|stood|serves|served|remains|remained|acts|stand|serve|remain) as (?:a |an )?(?:[\\p{L}-]+ )?(?:testament|reminder|beacon|monument|embodiment|cornerstone|hallmark|bastion|linchpin|catalyst)\\b|\\b(?:a|an) (?:true |living |lasting |enduring |powerful |fitting |clear )?testament to\\b|\\ba (?:stark|powerful|poignant|timely|vivid|sobering|potent|humbling|gentle) reminder (?:of|that)\\b|\\b(?:paints|painted|painting) a (?:vivid|clear|compelling|stark) picture\\b",
+      "unless": "\\b(?:Old|New|Last|Holy) Testament\\b",
+      "fix": "Say what the thing is or did; cut the significance claim."
+    },
+    {
+      "id": "P3", "family": "P", "kind": "tell", "name": "Importance assertion", "tier": "warn",
+      "registers": { "landing": "block", "store": "block", "social": "block" },
+      "regex": "\\bplay(?:s|ed|ing)? (?:a |an )?(?:crucial|pivotal|vital|key|critical|significant|essential|central|instrumental|integral|important|major|fundamental|paramount|decisive|indispensable) (?:role|part)\\b|\\b(?:is|are|remains|becomes|become) (?:absolutely |increasingly |more )?(?:crucial|pivotal|vital|essential|paramount|imperative|indispensable) (?:for|to|in) (?:the |a |an |your |any |every |our )?(?:success|growth|future|development|understanding|achieving|ensuring|maintaining|navigating)\\b|\\bcannot be (?:overstated|understated|overemphasi[sz]ed)\\b|\\bof (?:paramount|utmost|pivotal) importance\\b|\\b(?:marks|marked|marking|represents|represented) a (?:pivotal|significant|major|key|watershed|defining|turning|critical|crucial|historic) (?:moment|shift|milestone|step|turning point|chapter|point)\\b|\\bset(?:s|ting)? the stage for\\b|\\b(?:underscores|highlights|reinforces) (?:its|the|their) (?:importance|significance|role|value)\\b",
+      "fix": "State the effect with a number or an example, or cut it."
+    },
+    {
+      "id": "P4", "family": "P", "kind": "tell", "name": "Importance throat-clearing", "tier": "block",
+      "registers": { "docs": "warn", "comment": "warn", "commit": "warn", "pr": "warn", "chat": "warn", "email": "warn", "prose": "warn", "essay": "warn" },
+      "regex": "\\bit(?:['’]s| is) (?:also |especially |particularly |equally |therefore )?(?:important|worth|crucial|essential|vital|key|critical|interesting|notable|noteworthy|imperative) (?:to (?:note|remember|mention|recogni[sz]e|consider|understand|keep in mind|highlight|emphasi[sz]e|point out|acknowledge|stress|clarify)|noting|mentioning|remembering|pointing out|highlighting|emphasi[sz]ing)\\b|\\bit (?:should|must) be (?:noted|mentioned|emphasi[sz]ed|stressed|pointed out|remembered) that\\b|\\b(?:one|you) (?:should|must) (?:note|remember|keep in mind) that\\b",
+      "fix": "Delete the frame and state the fact. If it is a warning, name the consequence."
+    },
+    {
+      "id": "P5", "family": "P", "kind": "tell", "name": "Signpost opener", "tier": "block",
+      "registers": { "docs": "warn", "chat": "info", "comment": "warn", "pr": "warn", "commit": "warn", "email": "warn", "prose": "warn", "essay": "warn" },
+      "regex": "\\blet['’]s (?:dive|delve|unpack|explore|walk through|get into|take a (?:closer |deeper |quick |deep )?look|dig (?:in|into|deep|deeper)|jump (?:right )?in(?:to)?|break (?:it|this|that|things) down)(?: (?:right |deep |deeper )?(?:in|into))?\\b|\\blet us (?:dive|delve|explore|unpack|examine)\\b|\\bwithout further ado\\b|\\bbuckle up\\b|\\bgrab (?:a|your) (?:coffee|cup of|tea|popcorn)\\b|\\bin this (?:article|post|blog post|guide|piece|tutorial|essay|deep dive|write-up),? (?:we|I|you)(?:['’]ll| will| are going to| learn| discover| explore)\\b|\\b(?:read|keep reading|read on) to (?:find out|learn|discover)\\b|\\bhere['’]s (?:everything|what) you need to know\\b",
+      "fix": "Cut the signpost; start with the first real sentence."
+    },
+    {
+      "id": "P6", "family": "P", "kind": "tell", "name": "Summary closer", "tier": "warn",
+      "registers": { "chat": "info", "legal": "off" },
+      "at": "sentence-start",
+      "regex": "(?:In (?:conclusion|summary|closing|essence|a nutshell|sum)|To (?:summari[sz]e|sum (?:it )?up|conclude|wrap (?:it )?up|recap)|All in all|All things considered|At the end of the day|The bottom line(?: is)?|Bottom line|Long story short)\\s*[,:]",
+      "fix": "Delete the closer and the restatement after it; end on the last new point."
+    },
+    {
+      "id": "P7", "family": "P", "kind": "tell", "name": "Journey and potential metaphor", "tier": "block",
+      "registers": { "docs": "warn", "chat": "warn", "comment": "warn", "commit": "warn", "pr": "warn" },
+      "regex": "\\bembark(?:s|ed|ing)? (?:up)?on (?:a|an|the|this|your|our|their) (?:[\\p{L}-]+ )?(?:journey|adventure|quest|voyage)\\b|\\b(?:unlock|unlocks|unlocking|unleash|unleashes|unleashing|harness|harnesses|harnessing|tap into|tapping into|realize) (?:the |your |its |their |our )?(?:full |true |real |hidden |untapped |immense |vast |limitless |endless )?(?:power|potential|possibilities|secrets?|magic|insights?|creativity|productivity|opportunities)(?: of)?\\b|\\bnavigat(?:e|es|ed|ing) (?:the |these |those |this |its |their |our |your )?(?:complexities|complexity|intricacies|nuances|challenges|ever-changing|evolving|murky|choppy|uncharted|treacherous|maze|labyrinth|landscape|waters|terrain|minefield|ups and downs)\\b|\\b(?:rich|vibrant|intricate|complex|diverse|colorful|colourful|beautiful) tapestry\\b|\\btapestry of\\b|\\bin(?:to)? the landscape of\\b|\\bthe (?:ever-evolving|ever-changing|evolving|shifting|changing|competitive|digital|modern) landscape\\b",
+      "fix": "Name the actual task or outcome in plain words."
+    },
+    {
+      "id": "P8", "family": "P", "kind": "tell", "name": "Stock idiom", "tier": "warn",
+      "registers": { "chat": "info" },
+      "regex": "\\bshed(?:s|ding)? (?:some |new |more )?light on\\b|\\bpav(?:e|es|ed|ing) the way (?:for|to|toward|towards)\\b|\\b(?:a |the )?deep[- ]dive(?: into)?\\b|\\bdiv(?:e|es|ed|ing) (?:deep |deeper |right )?into\\b|\\bthe (?:road|path|journey) ahead\\b|\\bjourney of (?:discovery|self-discovery|growth|exploration|learning)\\b|\\b(?:a|the) (?:double-edged|two-edged) sword\\b|\\b(?:at|on) the (?:forefront|cutting edge|leading edge) of\\b|\\bstrik(?:e|es|ing) (?:a|the right|the perfect) balance\\b|\\bmore than (?:just )?(?:a|an) (?:tool|app|product|platform|feature)\\b|\\b(?:the|a) (?:perfect|ideal) (?:blend|balance|combination|mix) of\\b|\\bweather the storm\\b|\\b(?:a|the) (?:plethora|wealth) of\\b|\\bin the world of\\b",
+      "fix": "Replace the idiom with the literal claim, or cut it."
+    },
+    {
+      "id": "P9", "family": "P", "kind": "tell", "name": "Marketing template", "tier": "block",
+      "registers": { "docs": "warn", "ui": "warn", "essay": "warn", "prose": "warn", "chat": "warn", "commit": "info", "pr": "info", "comment": "info" },
+      "regex": "\\bsay (?:goodbye|good-bye|farewell) to\\b|\\bsay hello to\\b|\\blook no further\\b|\\b(?:take|takes|taking|took|bring|brings|bringing|elevate|elevates|elevating) (?:[\\p{L}'’-]+ ){0,3}to the next level\\b|\\b(?:supercharge|turbocharge|skyrocket|10x) (?:your|the)\\b|\\brevolutioni[sz]e (?:the way|how|your)\\b|\\b(?:redefin|reimagin|transform)(?:e|es|ed|ing|s)? (?:the way|how) (?:you|we|people|teams)\\b|\\b(?:the|your) (?:ultimate|go-to|one-stop|all-in-one) (?:solution|tool|guide|app|platform|resource|companion|shop)\\b|\\b(?:the|your) (?:go-to|one-stop|all-in-one) destination\\b|\\bdesigned with you in mind\\b|\\b(?:built|made|designed|crafted) for (?:the way you|how you) (?:work|live|think|shoot|create)\\b|\\bwhere [\\p{L}-]+ meets [\\p{L}-]+\\b|\\beverything you need,? (?:in one place|and nothing you don['’]t)\\b|\\bnever (?:miss|lose|worry about) [^.!?\\n]{1,40} again\\b|\\bthe future of [\\p{L}-]+ is (?:here|now)\\b|\\bmeet [\\p{L}][\\p{L}-]+,? (?:your|the) (?:new|next|ultimate|favou?rite|go-to|smartest|first)\\b|\\bthink [\\p{L}]+ meets [\\p{L}]+\\b",
+      "fix": "Say what the product does, for whom, with one concrete detail."
+    },
+    {
+      "id": "P10", "family": "P", "kind": "tell", "name": "Email and social cliché", "tier": "warn",
+      "registers": { "email": "block", "chat": "info" },
+      "regex": "\\b(?:I )?hope (?:this|my|the) (?:email|message|note|letter) finds you (?:well|in good (?:health|spirits))\\b|\\bhope you(?:['’]re| are) (?:doing )?well\\b|\\bI(?:['’]m| am) (?:reaching out|writing) (?:to|because|regarding|about)\\b|\\b(?:just )?(?:wanted|want) to (?:reach out|touch base|follow up|circle back|check in)\\b|\\btouch(?:ing)? base\\b|\\bcircl(?:e|ing) back\\b|\\bper my (?:last|previous) (?:email|message|note)\\b|\\bapologi[sz]e for any inconvenience\\b|\\bthank you for your (?:patience|understanding|continued support)\\b|\\b(?:I(?:['’]m| am)|we(?:['’]re| are)) (?:so |super |beyond |incredibly )?(?:excited|thrilled|delighted|humbled|honou?red|proud|pleased) to (?:announce|share|introduce|unveil|launch|present|welcome)\\b|\\b(?:big|exciting|great|huge) news[!:]|\\bstay tuned\\b|\\bwhat do you think\\?\\s*$|\\bthoughts\\?\\s*$|\\b(?:drop|share|leave) (?:a comment|your thoughts|them) below\\b|\\blike(?:,| and) (?:comment|share|subscribe)\\b|\\bthis one(?:['’]s| is) (?:worth your time|a must-read)\\b|\\ba must-read\\b|\\bdo yourself a favou?r\\b|\\byou won['’]t want to miss\\b|\\b(?:save|bookmark) this (?:for later|post)\\b",
+      "fix": "Cut the cliché; open with the reason you are writing."
+    },
+    {
+      "id": "P11", "family": "P", "kind": "tell", "name": "Abstract benefit phrase", "tier": "warn",
+      "registers": { "chat": "info" },
+      "regex": "\\b(?:a|an) (?:renewed|newfound|deeper|greater|stronger|strong|growing|real|true|heightened|profound) sense of (?:purpose|community|belonging|accomplishment|achievement|calm|peace|wonder|urgency|control|ownership|connection|pride|security|clarity|freedom)\\b|\\bpeace of mind\\b|\\b(?:enhanc|improv|elevat|boost|optimi[sz])(?:e|es|ed|ing) (?:the |your |their |our )?(?:overall )?(?:user |customer )?(?:experience|productivity|efficiency|workflow|engagement|well-being|wellbeing|quality of life)\\b|\\bunlock new (?:possibilities|opportunities|levels)\\b|\\bendless (?:possibilities|opportunities)\\b|\\ba world of (?:possibilities|opportunities|options)\\b",
+      "fix": "Name the concrete result: the task that takes less time, the step removed."
+    },
+    {
+      "id": "P12", "family": "P", "kind": "tell", "name": "Insight and overview filler", "tier": "warn",
+      "registers": { "chat": "info" },
+      "regex": "\\b(?:provid|offer|gain|deliver|yield|uncover|glean)(?:e|es|ed|ing|s)? (?:[\\p{L}-]+ )?(?:valuable|deep|deeper|key|actionable|meaningful|unique|crucial|critical|powerful|rich|invaluable) (?:insights?|perspectives?|lessons|takeaways)\\b|\\b(?:a|an) (?:comprehensive|holistic|nuanced|in-depth|thorough|deeper) (?:overview|understanding|look|guide|exploration|examination|picture) (?:of|into|at)\\b|\\bactionable insights\\b|\\bvaluable insights\\b",
+      "fix": "State the insight itself, or cut the promise of one."
+    },
+    {
+      "id": "P13", "family": "P", "kind": "tell", "name": "Challenges and outlook closer", "tier": "warn",
+      "registers": { "chat": "info" },
+      "regex": "\\bdespite (?:these|those|its|their|the|such|some|any|many|several|ongoing|numerous) (?:challenges|limitations|setbacks|obstacles|hurdles|difficulties|criticisms|drawbacks|shortcomings)\\b|\\b(?:faces|face|faced|facing) (?:several|many|numerous|significant|a number of|various|a range of|ongoing|considerable) (?:challenges|obstacles|hurdles|difficulties)\\b|\\b(?:only )?time will tell\\b|\\bthe future (?:looks|is|remains|seems) (?:bright|promising|uncertain|exciting)\\b|\\bremains to be seen\\b|\\bcontinu(?:e|es|ed|ing) to (?:evolve|shape|inspire|resonate|thrive|captivate)\\b|\\b(?:poised|positioned|primed) to (?:revolutioni[sz]e|transform|reshape|redefine|disrupt|dominate)\\b|\\b(?:enduring|lasting|indelible|far-reaching) (?:legacy|impact|influence|imprint)\\b|\\bleaves? (?:a|an) (?:lasting|indelible|enduring) (?:mark|impression|legacy)\\b|\\bexciting times ahead\\b|\\bone thing is (?:certain|clear|for sure)\\b|\\bthe best is yet to come\\b",
+      "fix": "Cut the outlook. If a risk is real, name it with a date or an owner."
+    },
+    {
+      "id": "P14", "family": "P", "kind": "tell", "name": "Fiction cliché", "tier": "off",
+      "registers": { "essay": "warn", "prose": "info" },
+      "regex": "\\bcouldn['’]t help but (?:feel|wonder|notice|think|smile|laugh)\\b|\\b(?:wave|flicker|surge|pang|glimmer|twinge|jolt) of (?:[\\p{L}-]+ )?(?:relief|hope|excitement|anxiety|unease|guilt|fear|recognition|something)\\b|\\bvoice (?:barely )?(?:above|more than) a whisper\\b|\\b(?:let out|released) a breath (?:she|he|they|I) (?:didn['’]t|hadn['’]t) (?:know|realize)\\b|\\bsomething akin to\\b|\\bthe air (?:was )?thick with\\b|\\bsend(?:s|ing)? shivers down\\b|\\bheart pound(?:ed|ing) in (?:her|his|my|their) chest\\b",
+      "fix": "Replace the stock image with one specific detail from this scene."
+    },
+    {
+      "id": "P15", "family": "P", "kind": "tell", "name": "Crafted-with-care marketese", "tier": "warn",
+      "registers": { "landing": "block", "store": "block", "social": "block", "email": "block" },
+      "regex": "\\b(?:thoughtfully|carefully|meticulously|lovingly|expertly|beautifully|intentionally|purposefully|painstakingly|obsessively|deliberately) (?:designed|crafted|built|curated|engineered|made|selected|tuned|handcrafted|created)\\b|\\b(?:designed|crafted|built|made) with (?:care|love|intention|purpose|passion|precision)\\b|\\b(?:meticulous|painstaking|obsessive|careful|great) attention to detail\\b|\\bhandcrafted\\b",
+      "unless": "\\b(?:hash keys?|inputs?|payloads?|packets?|requests?|strings?|regexp?s?|regex(?:es)?|URLs?|quer(?:y|ies)|attacks?|exploits?|malicious|fuzz\\p{L}*)\\b",
+      "fix": "Replace the care claim with the specific design decision and its effect."
+    },
+    {
+      "id": "P16", "family": "P", "kind": "house", "name": "Unsourced superlative or social proof", "tier": "warn",
+      "registers": { "landing": "block", "store": "block", "social": "block", "email": "block", "release": "block" },
+      "regex": "#\\s?1 (?:app|rated|choice|tool|best|selling|pick|solution|platform|for|in)\\b|\\bnumber one (?:app|tool|choice|solution|platform)\\b|\\bthe world['’]s (?:best|first|most|fastest|leading|smartest|easiest|only)\\b|\\bthe (?:best|ultimate|most (?:powerful|advanced|intuitive|comprehensive|complete|secure|private|accurate|reliable)|fastest|easiest|smartest) (?:[\\p{L}-]+ )?(?:app|tool|solution|platform|experience|software|service|choice)\\b|\\b(?:best|top|highest)[- ]rated\\b|\\baward[- ]winning\\b|\\b(?:trusted|loved|used|chosen) by (?:millions|thousands|hundreds|countless|teams|professionals|experts|creators|leading)\\b|\\b(?:industry|market)[- ]leading\\b|\\bunmatched\\b|\\bunbeatable\\b|\\bsecond to none\\b|\\blike never before\\b",
+      "fix": "Remove it, or replace it with a sourced number (\"fastest of 12 tools in our benchmark\")."
+    },
+    {
+      "id": "P17", "family": "P", "kind": "tell", "name": "Narrated candor", "tier": "warn",
+      "registers": { "chat": "info" },
+      "regex": "\\bI want to be (?:upfront|up front|transparent|honest|clear|direct) (?:about|here|with you)\\b|\\bto be (?:fully |completely |totally |perfectly |brutally )?(?:transparent|upfront|up front)\\b|\\brather than bury (?:this|it|the lede)\\b|\\bI(?:['’]ll| will) (?:just )?say it plainly\\b|\\blet me be (?:blunt|direct|candid|upfront)\\b|\\b(?:one|two|three|a few|some) (?:caveats?|limitations?) (?:up ?front|worth (?:flagging|noting|naming|stating))\\b|\\bbeing honest about (?:the )?(?:limitations|tradeoffs|trade-offs)\\b|\\bworth (?:stating|saying|naming|flagging) (?:plainly|explicitly|up ?front|out loud|clearly)\\b",
+      "fix": "Delete the announcement of honesty and state the caveat itself."
+    },
+    {
+      "id": "P18", "family": "P", "kind": "tell", "name": "Performed insight or stakes", "tier": "warn",
+      "registers": { "chat": "info" },
+      "regex": "\\blet that sink in\\b|\\bread that again\\b|\\bsit with that\\b|(?<=[.!?]\\s)(?:full stop|period)\\.|\\bthe punchline(?: is|:)|\\bhere['’]s where it gets (?:interesting|clever|tricky|good|weird)\\b|\\bthat['’]s the (?:interesting|clever|surprising|counterintuitive) part\\b|\\bwhat (?:nobody|no one) (?:tells you|talks about|is talking about|mentions)\\b|\\b(?:nobody|no one)(?:['’]s| is) talking about\\b|\\bthe [\\p{L}-]+ (?:nobody|no one) (?:talks about|is naming|names|mentions)\\b|\\bthe (?:stakes|implications|consequences) (?:are|could not be|couldn['’]t be) (?:high|higher|significant|real|enormous|profound|far-reaching)\\b|\\b(?:then|and then) everything changed\\b|\\bsomething shifted\\b",
+      "fix": "Cut the emphasis line; if the point needs weight, give the number or the example."
+    },
+    {
+      "id": "P19", "family": "P", "kind": "tell", "name": "Fake-casual aside", "tier": "warn",
+      "registers": { "chat": "info", "legal": "off" },
+      "regex": "\\b(?:checks notes|chef['’]s kiss|mic drop|sips (?:coffee|tea)|cracks knuckles|clears throat)\\b|\\((?:yes|no),? (?:really|seriously)\\)|\\(I know, I know\\)",
+      "fix": "Cut the prop; let the content carry the tone."
+    },
+    {
+      "id": "P20", "family": "P", "kind": "house", "name": "Generic error message", "tier": "off",
+      "registers": { "ui": "warn", "landing": "warn", "email": "warn", "docs": "info" },
+      "regex": "\\bsomething went wrong\\b|\\b(?:an|unknown|unexpected) error (?:has )?(?:occurred|happened)\\b|\\b(?:oops|whoops|uh[- ]oh)\\b|\\bplease try again later\\b",
+      "fix": "Say what failed and what the person can do: \"Couldn't save the photo. Check your connection, then try again.\""
+    },
+    {
+      "id": "P21", "family": "P", "kind": "tell", "name": "Aphorism formula", "tier": "warn",
+      "registers": { "chat": "info", "legal": "off" },
+      "regex": "\\b(?:is|are|becomes|become|remains) the (?:new )?(?:language|currency|architecture|grammar|operating system|oxygen|lifeblood|DNA|heartbeat|soul|fabric) of\\b|\\bnot (?:a|an) [\\p{L}-]+,? but (?:a|an) (?:mirror|lens|window|map|compass|practice|verb|conversation|promise|invitation)\\b|\\bat (?:its|their) (?:very )?core,",
+      "fix": "Say the literal claim the metaphor stands for."
+    },
+    {
+      "id": "P22", "family": "P", "kind": "house", "name": "Blame wording in UI", "tier": "off",
+      "registers": { "ui": "info" },
+      "regex": "\\b(?:invalid|illegal)\\b",
+      "fix": "Say what is expected: \"Enter an email address like name@example.com.\""
+    },
+    {
+      "id": "S1", "family": "S", "kind": "tell", "name": "Denial pivot", "tier": "warn",
+      "registers": { "landing": "block", "store": "block", "social": "block", "email": "block", "release": "block" },
+      "regex": "\\b(?:it|this|that|they|these|those|he|she|we|you|[\\p{L}-]+)(?:['’]s|['’]re| is| are| was| were) not (?:just|only|merely|simply|about|really about|even about) [^.!?;\\n]{1,60}?[,;:—–.]\\s*(?:it|this|that|they|these|those|he|she|we|you)(?:['’]s|['’]re| is| are| was| were)\\b|\\b(?:isn['’]t|aren['’]t|wasn['’]t|weren['’]t|doesn['’]t|don['’]t|didn['’]t) (?:just|only|merely|simply|really about|even|about) [^.!?;\\n]{1,60}?[,;:—–.]\\s*(?:(?:it|this|that|they|these|those)(?:['’]s|['’]re| is| are| does| do| did| was| were)?|(?:he|she|we|you)(?:['’]s|['’]re| is| are| does| do| did| was| were))\\b",
+      "fix": "State what it is. Drop the straw man it is not."
+    },
+    {
+      "id": "S2", "family": "S", "kind": "tell", "name": "Not only X but also Y", "tier": "warn",
+      "density": { "per1000": 1.5, "min": 1 },
+      "regex": "\\bnot (?:only|just|merely|simply) [^.!?;\\n]{1,80}?\\bbut (?:also |rather |even )?",
+      "fix": "Make one claim. If both halves matter, use two plain sentences."
+    },
+    {
+      "id": "S3", "family": "S", "kind": "tell", "name": "Trailing negation", "tier": "warn",
+      "density": { "per1000": 2, "min": 2 },
+      "regex": "(?<=[\\p{L}\\p{N}])[,;—–]\\s*not (?:a |an |the |just |only |your |their |our )?[\\p{L}\\p{N}'’ -]{1,40}[.!](?=\\s|$)",
+      "fix": "Keep the positive claim; cut the contrast unless a reader would actually assume the opposite."
+    },
+    {
+      "id": "S4", "family": "S", "kind": "tell", "name": "No X. No Y. Just Z.", "tier": "block",
+      "registers": { "docs": "warn", "chat": "warn", "comment": "warn", "commit": "warn", "pr": "warn", "essay": "warn" },
+      "regex": "\\bno [^.!?,;\\n]{1,40}[.!,;]\\s+no [^.!?,;\\n]{1,40}[.!,;]\\s+(?:(?:and )?no [^.!?,;\\n]{1,40}[.!,;]\\s+)?(?:just|only|simply|nothing but|all you need is)\\b|\\bno [^.!?,;\\n]{1,30}[.!]\\s+no [^.!?,;\\n]{1,30}[.!]\\s+no [^.!?,;\\n]{1,30}[.!]",
+      "fix": "Say what it does in one sentence; list the absences only if a reader asked."
+    },
+    {
+      "id": "S5", "family": "S", "kind": "tell", "name": "Analysis tail", "tier": "warn",
+      "regex": ",\\s+(?:highlighting|underscoring|emphasi[sz]ing|showcasing|symboli[sz]ing|cementing|solidifying|signall?ing|reinforcing|exemplifying|epitomi[sz]ing) (?:its|the|their|his|her|a|an|how|that|our|your|this|these|both|growing|ongoing|continued|broader|deeper|enduring|significant)\\b",
+      "fix": "Cut the tail, or make its claim a sentence with evidence."
+    },
+    {
+      "id": "S6", "family": "S", "kind": "tell", "name": "Participle tail density", "tier": "warn",
+      "density": { "per1000": 3, "min": 3 },
+      "regex": ",\\s+(?:ensuring|fostering|reflecting|demonstrating|illustrating|marking|contributing to|paving the way|enabling|empowering|allowing (?:you|users|for|teams)|making it (?:easier|easy|possible|simple|ideal|perfect)|creating a|providing a|offering a)\\b",
+      "fix": "Turn the tail into its own sentence or cut it."
+    },
+    {
+      "id": "S7", "family": "S", "kind": "tell", "name": "Copula avoidance", "tier": "warn",
+      "density": { "per1000": 2, "min": 2 },
+      "regex": "\\b(?:serves|served|serving|stands|stood|acts|acted|functions|functioned|operates|emerges|emerged) as (?:a|an|the|both|one|his|her|its|their)\\b|\\bboasts? (?:a|an|the|over|more than|some|its|their|\\p{N})\\b",
+      "fix": "Use is, are or has."
+    },
+    {
+      "id": "S8", "family": "S", "kind": "tell", "name": "Staged reveal", "tier": "warn",
+      "registers": { "landing": "block", "store": "block", "social": "block", "email": "block", "release": "block", "essay": "block", "prose": "block" },
+      "at": "sentence-start",
+      "regex": "(?:And )?(?:the (?:result|answer|catch|kicker|twist|best part|secret|truth|reality|problem|fix|solution|takeaway|upshot|difference|verdict|bottom line|outcome|payoff|irony|short answer|real answer|honest answer|short version|real question|real story|good news|bad news)|here['’]s the (?:thing|kicker|catch|deal|twist|truth|secret|best part|problem|rub|key|trick)|spoiler|plot twist|honestly|real talk|hot take)\\s*(?:\\?(?=\\s|$)|:(?=[ \\t]+\\S))|(?:Why|How) (?:does|is|do) (?:this|that|it) (?:matter|work)\\?\\s+(?:Because|Simple|It['’]s simple)\\b",
+      "fix": "State the point directly; drop the setup line."
+    },
+    {
+      "id": "S9", "family": "S", "kind": "tell", "name": "Vague attribution", "tier": "warn",
+      "registers": { "landing": "block", "store": "block", "social": "block", "email": "block" },
+      "regex": "\\b(?:experts|researchers|studies|scientists|critics|observers|analysts|industry (?:experts|leaders|reports|observers|insiders)|many (?:experts|people|users|critics|observers)|some (?:experts|people|critics))(?: have)? (?:say|says|said|suggest|suggests|suggested|believe|believes|argue|argues|argued|agree|agrees|note|notes|noted|found|find|show|shows|showed|shown|indicate|indicates|claim|claims|warn|warns|estimate|estimates)\\b|\\bit (?:is|has been|was) (?:widely |often |commonly |generally |frequently |increasingly )?(?:said|believed|argued|reported|acknowledged|recogni[sz]ed|known|suggested|accepted|thought) that\\b(?! you\\b)|\\b(?:research|science|data|evidence) (?:shows|suggests|indicates|proves|has shown)\\b|\\baccording to (?:experts|studies|research|many|some|reports)\\b",
+      "fix": "Name the source and the finding, or cut the claim."
+    },
+    {
+      "id": "S10", "family": "S", "kind": "tell", "name": "Whether you're X or Y", "tier": "warn",
+      "registers": { "landing": "block", "store": "block", "social": "block", "email": "block" },
+      "regex": "(?<=^|[.!?…][\"'”’)\\]]*\\s+|[,;:—–]\\s*)whether you(?:['’]re| are)(?: a| an)? [^,.!?;\\n]{1,40}? or (?:a |an |just |simply |someone )?[^,.!?;\\n]{1,40}",
+      "fix": "Name the one reader this is for and what they get."
+    },
+    {
+      "id": "S11", "family": "S", "kind": "tell", "name": "Rhetorical question opener", "tier": "warn",
+      "registers": { "landing": "block", "store": "block", "social": "block", "email": "block" },
+      "at": "sentence-start",
+      "regex": "(?:(?:Have you )?ever (?:wondered|wished|felt|found yourself|struggled|thought about)|Tired of|Sick of|Fed up with|Struggling (?:to|with)|Wondering (?:how|why|what|whether|if)|Looking for (?:a|an|the) (?:way|tool|app|solution|better)|What if (?:you|there) (?:could|was|were)|Imagine (?:a world|if|being able|never))\\b",
+      "fix": "Open with the fact the question was hinting at."
+    },
+    {
+      "id": "S12", "family": "S", "kind": "tell", "name": "False range", "tier": "warn",
+      "registers": { "landing": "block", "store": "block", "social": "block", "email": "block" },
+      "at": "sentence-start",
+      "regex": "From (?:[\\p{L}'’-]+ ){0,3}[\\p{L}'’-]+ to (?:[\\p{L}'’-]+ ){0,3}[\\p{L}'’-]+,",
+      "unless": "\\p{N}|\\bfrom (?:left|top|right|bottom|start|beginning|source|scratch|here|there|now|then|time|end) to\\b",
+      "fix": "List the actual cases, or name the one that matters."
+    },
+    {
+      "id": "S13", "family": "S", "kind": "tell", "name": "Fragment triplet", "tier": "warn",
+      "registers": { "landing": "block", "store": "block", "social": "block", "email": "block" },
+      "caseSensitive": true,
+      "regex": "(?<![\\p{L}\\p{N}.])(?:\\p{Lu}[\\p{L}'’-]+(?: [\\p{L}'’-]+)?[.!]\\s+){2,}\\p{Lu}[\\p{L}'’-]+(?: [\\p{L}'’-]+)?[.!](?=\\s|$)",
+      "unless": "\\b(?:Mr|Mrs|Ms|Dr|St|Inc|Ltd|Co|Jr|Sr|vs|etc|No|Fig|Vol)\\.",
+      "fix": "Write one sentence that says why the qualities matter together."
+    },
+    {
+      "id": "S14", "family": "S", "kind": "tell", "name": "Uniform sentence rhythm", "tier": "info",
+      "registers": { "essay": "warn", "email": "warn", "prose": "warn" },
+      "check": "uniformRhythm",
+      "params": { "minSentences": 12, "maxCV": 0.3 },
+      "fix": "Vary sentence length: split one long sentence, merge two short ones, let one run."
+    },
+    {
+      "id": "S15", "family": "S", "kind": "tell", "name": "Reflexive triples", "tier": "warn",
+      "registers": { "comment": "info", "commit": "info", "ui": "info", "legal": "off" },
+      "check": "tripletDensity",
+      "params": { "min": 3, "per1000": 4 },
+      "fix": "Keep a list of three only where all three are needed; otherwise name the one or two that matter."
+    },
+    {
+      "id": "S16", "family": "S", "kind": "tell", "name": "Contrast and corrective framing density", "tier": "warn",
+      "density": { "per1000": 2, "min": 2 },
+      "regex": "\\b(?:it|this|that|they|these|those)(?:(?:['’]s|['’]re| is| are| was| were) not|(?: is| are| was| were)n['’]t) (?!just\\b|only\\b|merely\\b|simply\\b|about\\b)[^.!?;\\n]{1,50}?[,;:—–.]\\s*(?:it|this|that|they|these|those)(?:['’]s|['’]re| is| are| was| were)\\b|\\b(?:rather than|instead of) (?:simply|just|merely)\\b|\\bshould (?:be treated|be read|be understood|be seen|be viewed|be thought of) as\\b|\\bdoes not (?:by itself )?(?:establish|imply|guarantee)\\b|\\bshould not be (?:confused|conflated) with\\b|\\brather than as\\b",
+      "fix": "Lead with the positive claim; keep a contrast only where readers hold the wrong idea."
+    },
+    {
+      "id": "S17", "family": "S", "kind": "tell", "name": "Less X, more Y", "tier": "warn",
+      "registers": { "landing": "block", "store": "block", "social": "block", "email": "block" },
+      "regex": "\\bless (?:like|about|of) (?:a |an |the )?[\\p{L}'’-]+(?: [\\p{L}'’-]+){0,3},? (?:and )?more (?:like|about|of)\\b|\\bless (?:a|an) [\\p{L}'’-]+(?: [\\p{L}'’-]+){0,2},? (?:and )?more (?:a|an)\\b",
+      "fix": "Say what it is; drop the comparison to what it is less like."
+    },
+    {
+      "id": "S18", "family": "S", "kind": "tell", "name": "Counted announcement", "tier": "warn",
+      "registers": { "chat": "info", "legal": "off" },
+      "at": "sentence-start",
+      "regex": "(?:Two|Three|Four|Five|Six|A few|Several|A couple of) (?:things|constraints|reasons|lessons|ideas|factors|forces|principles|questions|points|takeaways|rules|patterns|changes|problems|risks|tradeoffs|trade-offs|caveats|details|decisions|observations|insights)(?: [\\p{L}'’-]+){0,4}:",
+      "fix": "Drop the count-and-colon setup; give the items."
+    },
+    {
+      "id": "S19", "family": "S", "kind": "tell", "name": "Zinger closer", "tier": "warn",
+      "registers": { "chat": "info", "legal": "off" },
+      "at": "sentence-start",
+      "regex": "(?:That|This|And that|And this)(?:['’]s| is) the (?:(?:real|whole|actual|entire) (?:point|win|lesson|difference|story|trick|key|catch|problem|unlock|game|magic|secret|question|work)\\b|(?:point|win|lesson|difference|story|trick|key|catch|unlock|magic|secret)[.!])|(?:That|This) (?:distinction|difference|detail|part|nuance|choice|order|gap|tradeoff|trade-off|shift|step) (?:matters|counts)[.!]",
+      "fix": "Cut the closing line; the paragraph already made the point."
+    },
+    {
+      "id": "S20", "family": "S", "kind": "tell", "name": "Performed balance", "tier": "warn",
+      "registers": { "chat": "info", "legal": "off" },
+      "regex": "\\bwhile (?:some|many|critics|skeptics|others) (?:might|may|would|could) (?:argue|say|suggest|claim|contend)\\b|\\bsome (?:might|may|would) (?:argue|say|suggest|claim) that\\b|\\bon the one hand\\b|\\bboth (?:sides|camps) (?:have|make) (?:valid|good|fair) points\\b",
+      "fix": "Name who disagrees and why, or state your position without the straw opponent."
+    },
+    {
+      "id": "S21", "family": "S", "kind": "tell", "name": "False agency", "tier": "warn",
+      "registers": { "chat": "info", "legal": "off" },
+      "density": { "per1000": 2, "min": 2 },
+      "regex": "\\bthe (?:data|numbers|evidence|research|metrics|math|chart|graph|results|story|market|signal|pattern) (?:tells|tell|told|whispers|demands|demand|rewards|reward|punishes|punish|speaks|speak|doesn['’]t lie|don['’]t lie|never lies?)\\b|\\b(?:speaks|speak) for (?:itself|themselves)\\b",
+      "fix": "Name who measured what and what they found."
+    },
+    {
+      "id": "S22", "family": "S", "kind": "tell", "name": "Same-opener run", "tier": "info",
+      "registers": { "essay": "warn", "landing": "warn", "social": "warn", "email": "warn" },
+      "check": "sameOpenerRun",
+      "params": { "run": 3 },
+      "fix": "Merge the sentences or vary how they open, unless the repetition is the point."
+    },
+    {
+      "id": "F1", "family": "F", "kind": "house", "name": "Dash in user-facing copy", "tier": "off",
+      "registers": { "@user": "block" },
+      "regex": "[—–]|(?<=[\\p{L}\\p{N}.,!?)'\"’”])[ \\t]+-{1,2}[ \\t]+(?=[\\p{L}(\"'‘“])|(?<=\\p{L})--(?=\\p{L})",
+      "fix": "Use a period, comma, colon or parentheses. For ranges write \"to\"."
+    },
+    {
+      "id": "F2", "family": "F", "kind": "tell", "name": "Dash density", "tier": "warn",
+      "registers": { "@user": "off" },
+      "density": { "per1000": 4, "min": 3 },
+      "regex": "—|(?<=\\S)[ \\t]–[ \\t](?=\\S)|(?<=\\p{L}) -- (?=\\p{L})",
+      "fix": "Replace most dashes with periods, commas or parentheses; keep one only where a hard break helps."
+    },
+    {
+      "id": "F3", "family": "F", "kind": "tell", "name": "Arrow in prose", "tier": "info",
+      "registers": { "commit": "warn", "pr": "warn", "comment": "warn", "chat": "warn", "email": "warn", "essay": "warn", "prose": "warn", "docs": "warn" },
+      "density": { "per1000": 3, "min": 2 },
+      "regex": "[→⇒⟶➜➔↦]|(?<=\\s)(?:-->|->|=>)(?=\\s)",
+      "unless": "\\b(?:Settings|Preferences|System Settings|File|Edit|View|Menu|General|Privacy|Window|Help|Tools|Format|Insert)\\s*[→>]",
+      "fix": "Write the relation as a verb: \"renames X to Y\", \"leads to\", \"then\"."
+    },
+    {
+      "id": "F4", "family": "F", "kind": "tell", "name": "Curly quotes or ellipsis character in dev text", "tier": "off",
+      "registers": { "commit": "info", "comment": "info" },
+      "regex": "[“”‘’…]",
+      "fix": "Use straight quotes and three periods in commit messages and code comments."
+    },
+    {
+      "id": "F5", "family": "F", "kind": "tell", "name": "Title Case headings", "tier": "warn",
+      "registers": { "landing": "info", "store": "info", "ui": "info", "social": "info", "legal": "off" },
+      "check": "titleCaseHeadings",
+      "params": { "min": 2 },
+      "fix": "Use sentence case: capitalize the first word and proper nouns only."
+    },
+    {
+      "id": "F6", "family": "F", "kind": "tell", "name": "Bold-label bullets", "tier": "warn",
+      "registers": { "chat": "info", "legal": "off" },
+      "check": "boldLabelBullets",
+      "params": { "min": 3 },
+      "fix": "Write the items as plain sentences, or use a table if they truly are label and value."
+    },
+    {
+      "id": "F7", "family": "F", "kind": "tell", "name": "Bold sprinkled through prose", "tier": "warn",
+      "registers": { "chat": "info", "legal": "off" },
+      "check": "boldDensity",
+      "params": { "min": 5, "per100": 2 },
+      "fix": "Remove bold from all but the one phrase a skimmer must not miss."
+    },
+    {
+      "id": "F8", "family": "F", "kind": "tell", "name": "Emoji as heading or bullet decoration", "tier": "block",
+      "registers": { "landing": "warn", "store": "warn", "ui": "warn", "email": "warn", "release": "warn", "social": "info", "chat": "info" },
+      "check": "emojiLead",
+      "fix": "Remove the emoji; let the heading or item text carry the meaning."
+    },
+    {
+      "id": "F9", "family": "F", "kind": "tell", "name": "Emoji density", "tier": "warn",
+      "registers": { "social": "info", "chat": "info" },
+      "check": "emojiDensity",
+      "params": { "min": 3, "per1000": 5 },
+      "fix": "Cut the emoji to none, or to one where it replaces a word."
+    },
+    {
+      "id": "F10", "family": "F", "kind": "tell", "name": "Headings on short text", "tier": "warn",
+      "registers": { "docs": "info", "legal": "off" },
+      "check": "headingsOnShortText",
+      "params": { "minHeadings": 3, "maxWords": 300 },
+      "fix": "Remove the headings; short text reads as paragraphs."
+    },
+    {
+      "id": "F11", "family": "F", "kind": "tell", "name": "List where prose would do", "tier": "info",
+      "registers": { "essay": "warn", "email": "warn", "prose": "warn", "chat": "warn" },
+      "check": "listHeavy",
+      "params": { "minItems": 6, "share": 0.6 },
+      "fix": "Turn the bullets into sentences that say how the items relate."
+    },
+    {
+      "id": "F12", "family": "F", "kind": "tell", "name": "Markdown where it will not render", "tier": "block",
+      "check": "markdownInPlainText",
+      "fix": "Remove the markup; plain-text surfaces show the asterisks and hashes."
+    },
+    {
+      "id": "F13", "family": "F", "kind": "tell", "name": "Exclamation marks in neutral text", "tier": "warn",
+      "registers": { "social": "info", "chat": "info", "legal": "off" },
+      "density": { "per1000": 4, "min": 3 },
+      "regex": "(?<=[\\p{L}\\p{N})\"'’”])!+(?=\\s|$|[\"'’”)])",
+      "fix": "End with a period; let the content carry the energy."
+    },
+    {
+      "id": "F14", "family": "F", "kind": "tell", "name": "Stock section heading", "tier": "warn",
+      "registers": { "chat": "info" },
+      "in": ["heading"],
+      "regex": "^\\s*(?:Key (?:Takeaways?|Highlights|Insights|Points|Considerations|Benefits)|Final Thoughts|In Conclusion|Wrapping Up|Closing Thoughts|The Bottom Line|Bottom Line|Why (?:It|This) Matters|Looking Ahead|Future Outlook|The Road Ahead|Challenges and (?:Considerations|Opportunities|Limitations|Legacy|Future Directions)|Understanding [\\p{L}' -]{2,40}|The Future of [\\p{L}' -]{2,40}|The Power of [\\p{L}' -]{2,40}|Real-World (?:Applications|Examples|Impact|Use Cases)|TL;?DR)\\s*[:.]?\\s*$",
+      "fix": "Delete the section, or give it a heading that names its specific content."
+    },
+    {
+      "id": "F15", "family": "F", "kind": "tell", "name": "Invisible character or homoglyph", "tier": "block",
+      "on": "src",
+      "caseSensitive": true,
+      "regex": "(?<!\\s)[\\u200B\\u2060\\u00AD\\u180E\\u2061-\\u2064]|[\\u200B\\u2060\\u00AD\\u180E\\u2061-\\u2064](?!\\s)|(?<!^)\\uFEFF|(?<![\\p{Extended_Pictographic}\\u{FE0F}\\u{1F3FB}-\\u{1F3FF}])\\u200D|\\u200D(?!\\p{Extended_Pictographic})|(?<=\\p{sc=Latin}{2})[\\u0430\\u0435\\u043E\\u0440\\u0441\\u0443\\u0445\\u0456\\u0458\\u0410\\u0412\\u0415\\u041A\\u041C\\u041D\\u041E\\u0420\\u0421\\u0422\\u0425\\u03BF\\u0391\\u0392\\u0395\\u0396\\u0397\\u0399\\u039A\\u039C\\u039D\\u039F\\u03A1\\u03A4\\u03A5\\u03A7]|[\\u0430\\u0435\\u043E\\u0440\\u0441\\u0443\\u0445\\u0456\\u0458\\u0410\\u0412\\u0415\\u041A\\u041C\\u041D\\u041E\\u0420\\u0421\\u0422\\u0425\\u03BF\\u0391\\u0392\\u0395\\u0396\\u0397\\u0399\\u039A\\u039C\\u039D\\u039F\\u03A1\\u03A4\\u03A5\\u03A7](?=\\p{sc=Latin}{2})|(?<=\\p{sc=Latin})[\\u0430\\u0435\\u043E\\u0440\\u0441\\u0443\\u0445\\u0456\\u0458\\u0410\\u0412\\u0415\\u041A\\u041C\\u041D\\u041E\\u0420\\u0421\\u0422\\u0425\\u03BF\\u0391\\u0392\\u0395\\u0396\\u0397\\u0399\\u039A\\u039C\\u039D\\u039F\\u03A1\\u03A4\\u03A5\\u03A7](?=\\p{sc=Latin})",
+      "fix": "Delete invisible characters and retype look-alike letters; they break search, copy and screen readers."
+    },
+    {
+      "id": "F16", "family": "F", "kind": "tell", "name": "Hashtag stuffing", "tier": "off",
+      "registers": { "social": "warn" },
+      "density": { "per1000": 0, "min": 6 },
+      "regex": "(?<![\\p{L}\\p{N}_&/#])#[\\p{L}_][\\p{L}\\p{N}_]{1,40}",
+      "fix": "Keep one to three hashtags people actually follow."
+    },
+    {
+      "id": "F17", "family": "F", "kind": "tell", "name": "Unicode styled letters", "tier": "warn",
+      "registers": { "@user": "block", "docs": "info", "essay": "info" },
+      "regex": "[\\u{1D400}-\\u{1D7FF}]+",
+      "fix": "Use plain letters; screen readers spell styled ones out one by one."
+    },
+    {
+      "id": "H1", "family": "H", "kind": "house", "name": "Padding phrase", "tier": "warn",
+      "registers": { "legal": "off", "chat": "info" },
+      "regex": "\\b(?:due to|owing to|in (?:light|view) of|despite|in spite of|given) the fact that\\b|\\bfirst and foremost\\b|\\beach and every\\b|\\bany and all\\b|\\bat (?:this|that|the present) (?:point in )?time\\b|\\bfor (?:all )?intents and purposes\\b|\\bin (?:the )?(?:event|case) that\\b|\\bfor the purpose of\\b|\\bwith (?:regard|regards|respect) to\\b|\\bin (?:close )?proximity to\\b|\\bon a (?:daily|regular|weekly|monthly|yearly|annual|consistent|case-by-case) basis\\b|\\bhas the (?:ability|capacity|capability) to\\b|\\bin the (?:near|not-too-distant|foreseeable) future\\b|\\bthe vast majority of\\b|\\ba (?:large|significant|considerable|substantial) (?:number|amount) of\\b|\\bit goes without saying\\b|\\bneedless to say\\b|\\bin and of itself\\b",
+      "fix": "Cut to the short form: because, first, every, now, if, to, about, near, daily, can, soon, most, many."
+    },
+    {
+      "id": "H2", "family": "H", "kind": "house", "name": "Wordy connector density", "tier": "warn",
+      "registers": { "legal": "off", "chat": "info" },
+      "density": { "per1000": 4, "min": 3 },
+      "regex": "\\bin order (?:to|for)\\b|\\bin terms of\\b|\\bwhether or not\\b|\\bthe fact that\\b|\\b(?:is|are) able to\\b|\\bin the process of\\b|\\bit is (?:possible|likely|clear|evident) that\\b",
+      "fix": "Shorten: to, about, whether, that, can, now, may."
+    },
+    {
+      "id": "H3", "family": "H", "kind": "tell", "name": "Stacked hedge", "tier": "warn",
+      "registers": { "chat": "info", "legal": "off" },
+      "regex": "\\b(?:may|might|could|can) (?:potentially|possibly|perhaps|conceivably)\\b|\\b(?:potentially|possibly|perhaps) (?:could|may|might|can)\\b|\\bit (?:may|might|could) be (?:argued|said|suggested|noted) that\\b|\\bto (?:some|a certain) (?:extent|degree)\\b|\\b(?:somewhat|fairly|relatively|rather) (?:unique|essential|crucial|critical|vital)\\b|\\bcan (?:vary|differ) (?:depending on|based on)\\b|\\bmay or may not\\b|\\b(?:may|might|could) (?:arguably|ultimately|eventually) (?:unlock|transform|reshape|become|revolutioni[sz]e|redefine|change|prove)\\b",
+      "fix": "Commit to the claim, or name the condition under which it fails."
+    },
+    {
+      "id": "H4", "family": "H", "kind": "house", "name": "Empty intensifier density", "tier": "warn",
+      "registers": { "chat": "info", "legal": "off" },
+      "density": { "per1000": 10, "min": 4 },
+      "words": ["very", "really", "extremely", "quite", "actually", "basically", "literally", "totally", "highly", "absolutely", "definitely", "certainly", "completely", "entirely", "pretty much"],
+      "unless": "\\bquite a (?:few|bit|lot)\\b|\\bhighly (?:available|scalable|concurrent|configurable|optimi[sz]ed)\\b",
+      "fix": "Delete the intensifier, or replace the phrase with one specific word."
+    },
+    {
+      "id": "H5", "family": "H", "kind": "house", "name": "Subjective ease word", "tier": "warn",
+      "registers": { "chat": "off", "essay": "info", "legal": "off", "commit": "off", "pr": "info", "comment": "info" },
+      "density": { "per1000": 4, "min": 3 },
+      "words": ["simply", "easy", "easily", "obviously", "of course", "clearly", "straightforward", "trivial", "trivially", "painless", "painlessly"],
+      "fix": "Cut it; show the steps and let the reader judge the effort."
+    },
+    {
+      "id": "H6", "family": "H", "kind": "tell", "name": "Transition-word openers", "tier": "warn",
+      "registers": { "chat": "info", "legal": "off" },
+      "density": { "per1000": 3, "min": 3 },
+      "at": "sentence-start",
+      "regex": "(?:Additionally|Moreover|Furthermore|Notably|Crucially|Importantly|Interestingly|Significantly|Ultimately|Surprisingly|Unsurprisingly|Undoubtedly|Tellingly|Remarkably|Curiously|Essentially|Fundamentally|Overall|Conversely|Consequently|Subsequently|Firstly|Secondly|Thirdly|Lastly|In addition|That being said|With that being said|Having said that|Equally important|Last but not least|By the same token|To that end|In essence|Indeed)\\s*,",
+      "fix": "Delete most connectives; the order of sentences already carries the logic."
+    },
+    {
+      "id": "H7", "family": "H", "kind": "house", "name": "Backward or forward reference", "tier": "info",
+      "registers": { "ui": "warn", "email": "warn", "landing": "warn" },
+      "regex": "\\bas (?:mentioned|noted|discussed|stated|outlined|described|highlighted|explained|detailed) (?:above|earlier|previously|before|below|in the previous section)\\b|\\bthe (?:above|below)(?![\\p{L}-])|\\babove-mentioned\\b|\\baforementioned\\b",
+      "fix": "Name the thing again, or link to it."
+    },
+    {
+      "id": "H8", "family": "H", "kind": "tell", "name": "Hedged enumeration opener", "tier": "warn",
+      "registers": { "chat": "info", "legal": "off" },
+      "density": { "per1000": 3, "min": 2 },
+      "at": "sentence-start",
+      "regex": "There (?:are|is) (?:several|many|a few|a number of|various|numerous|multiple|a variety of|a range of) (?:ways|things|factors|reasons|approaches|options|considerations|benefits|aspects|strategies|steps|types|kinds)\\b|It depends on (?:a number of|several|many|various) factors\\b|Generally speaking,|In general,",
+      "fix": "Name the ways or factors directly, or pick the one that applies."
+    },
+    {
+      "id": "W1", "family": "W", "kind": "tell", "name": "AI-era vocabulary", "tier": "warn",
+      "registers": { "landing": "block", "store": "block", "ui": "block", "social": "block", "email": "block", "release": "block" },
+      "words": ["delve", "delves", "delved", "delving", "tapestry", "tapestries", "testament", "intricacies", "intricate", "intricately", "meticulous", "meticulously", "commendable", "multifaceted", "plethora", "unwavering", "indelible", "camaraderie", "embark", "embarks", "embarked", "embarking", "bolster", "bolsters", "bolstered", "bolstering", "garner", "garners", "garnered", "garnering", "showcase", "showcases", "showcased", "showcasing", "underscored", "underscoring", "pivotal", "paramount", "labyrinth", "labyrinthine", "enigma", "enigmatic", "beacon", "nestled", "bustling", "interplay", "kaleidoscope", "symphony", "realm", "realms", "palpable", "ever-evolving", "ever-changing", "captivate", "captivates", "captivating", "captivated"],
+      "unless": "\\b(?:Old|New|Last|Holy) Testament\\b|\\bunderscores? (?:character|characters|prefix|separat|instead|between|in (?:the )?(?:name|key|identifier|file))|_|\\bsnake.case\\b|\\bRealm (?:Swift|Kotlin|Studio|database|DB|object|Sync)\\b|\\b(?:web|bluetooth|BLE|radio) beacons?\\b|\\bbeacon (?:API|frame|interval|chain|node)\\b|\\bsymphony orchestra\\b|\\bshowcase (?:page|section|component|event|app|project|gallery)\\b|\\[-\\p{L} realm\\]|\\b(?:Kerberos|krb5?|KDC|kinit|klist|kadmin)\\b|\\b(?:default|local|remote|foreign|admin|security) realms?\\b|\\bcross-realm\\b|\\brealms? (?:name|names|list)\\b",
+      "fix": "Use the plain word (look at, show, key, many, important) or cut it."
+    },
+    {
+      "id": "W2", "family": "W", "kind": "tell", "name": "Hype and buzzwords", "tier": "warn",
+      "registers": { "landing": "block", "store": "block", "ui": "block", "social": "block", "email": "block", "release": "block", "commit": "info", "comment": "info" },
+      "words": ["cutting-edge", "game-changer", "game-changers", "game-changing", "groundbreaking", "ground-breaking", "revolutionary", "revolutionize", "revolutionizes", "revolutionizing", "revolutionise", "revolutionises", "revolutionising", "transformative", "unparalleled", "unrivaled", "unrivalled", "best-in-class", "world-class", "next-gen", "next-generation", "state-of-the-art", "innovative", "elevate", "elevates", "elevating", "empower", "empowers", "empowering", "empowerment", "unleash", "unleashes", "unleashing", "supercharge", "supercharged", "supercharges", "turbocharge", "turbocharged", "skyrocket", "skyrockets", "synergy", "synergies", "synergistic", "holistic", "streamline", "streamlines", "streamlined", "streamlining", "leverage", "leverages", "leveraging", "harnessing", "vibrant", "robust", "robustly", "breathtaking", "stunning", "immersive", "top-notch", "frictionless", "delightful", "delightfully", "blazing-fast", "lightning-fast", "blazingly", "powerful", "intuitive", "intuitively", "sleek", "beautifully"],
+      "unless": "\\b(?:leveraged buyout|financial leverage|leverage ratio|operating leverage)\\b|\\brobust (?:standard errors?|regression|statistics?|estimat\\p{L}*|optimi[sz]ation|control|to (?:outliers|noise))\\b",
+      "fix": "Name the specific capability and its effect; delete the adjective."
+    },
+    {
+      "id": "W3", "family": "W", "kind": "house", "name": "Hype word in product copy", "tier": "warn",
+      "registers": { "landing": "block", "store": "block", "ui": "block", "social": "block", "email": "block", "release": "block", "commit": "off", "pr": "off", "comment": "off" },
+      "words": ["smart", "smarter", "smartest", "smartly", "automatic", "automatically", "automagic", "automagically", "magic", "magical", "magically", "seamless", "seamlessly", "effortless", "effortlessly", "intelligent", "intelligently"],
+      "unless": "\\bsmart (?:albums?|folders?|playlists?|mailboxe?s?|groups?|quotes?|punctuation|cards?|tvs?|homes?|watch(?:es)?|phones?|devices?|contracts?|pointers?|stacks?|invert|plugs?|speakers?|meters?|lists?|collections?|keyboard|compose|reply|replies|crop|search|selection|rotation|charging)\\b|\\bmagic (?:numbers?|links?|bytes?|strings?|methods?|comments?|constants?|wand|mouse|keyboard|trackpad|eraser|values?)\\b|\\bautomatic(?:ally)? (?:renew\\p{L}*|bill\\p{L}*|charg\\p{L}*|cancel\\p{L}*)\\b|\\b(?:renew\\p{L}*|subscription\\p{L}*) automatically\\b|\\bautomatic (?:reference counting|transmission|variables?|semicolon)\\b|\\b(?:artificial|business) intelligen",
+      "fix": "Name the mechanism: what runs, when, and on what (\"checks for duplicates each time you import\")."
+    },
+    {
+      "id": "W4", "family": "W", "kind": "house", "name": "\"AI\" as a selling point", "tier": "off",
+      "registers": { "landing": "block", "store": "block", "ui": "block", "social": "block", "email": "block", "release": "block", "docs": "info" },
+      "caseSensitive": true,
+      "regex": "(?<![\\p{L}\\p{N}_])AI(?:-(?:powered|driven|first|native|enabled|enhanced|assisted|generated|based|infused|fueled|backed))?(?![\\p{L}\\p{N}_])",
+      "fix": "Name what the model does and whose model it is (\"Claude reads the file names you share\"), or cut it."
+    },
+    {
+      "id": "W5", "family": "W", "kind": "tell", "name": "Inflated verb", "tier": "warn",
+      "registers": { "legal": "off", "comment": "info" },
+      "words": ["utilize", "utilizes", "utilized", "utilizing", "utilise", "utilises", "utilised", "utilising", "utilization", "utilisation", "facilitate", "facilitates", "facilitated", "facilitating", "spearhead", "spearheads", "spearheaded", "spearheading", "operationalize", "operationalizes", "operationalized", "incentivize", "incentivizes", "incentivized", "actualize", "actualized", "endeavor", "endeavors", "endeavour", "endeavours", "commence", "commences", "commenced", "ascertain", "ascertained", "elucidate", "elucidates", "elucidated", "elucidating", "necessitate", "necessitates", "necessitated", "encompass", "encompasses", "encompassed", "encompassing", "embody", "embodies", "embodied", "exemplify", "exemplifies", "exemplified", "underpin", "underpins", "underpinned", "catalyze", "catalyzes", "catalyzed", "foster", "fosters", "fostered", "fostering", "cultivate", "cultivates", "cultivating", "adhere", "adheres", "adhered", "adhering"],
+      "unless": "\\b(?:CPU|GPU|memory|disk|resource|bandwidth|capacity|network|core|thread|battery)s? utili[sz]ation\\b|\\butili[sz]ation (?:rate|percent|of (?:the )?(?:CPU|GPU|memory|disk))\\b|\\bfoster (?:care|parents?|homes?|child|children|famil\\p{L}*|kids?|pets?|dogs?|cats?)\\b",
+      "fix": "Use the plain verb: use, help, lead, start, find out, explain, need, include, support, build."
+    },
+    {
+      "id": "W6", "family": "W", "kind": "tell", "name": "Sincerity and intensity adverbs", "tier": "warn",
+      "registers": { "chat": "info" },
+      "density": { "per1000": 3, "min": 2 },
+      "words": ["genuinely", "truly", "honestly", "deeply", "incredibly", "remarkably", "profoundly", "undeniably", "undoubtedly", "unequivocally", "inherently", "inextricably", "quietly", "fundamentally", "utterly", "exceptionally", "immensely", "tremendously", "strategically", "thoughtfully", "intentionally", "purposefully", "authentically", "wholeheartedly", "arguably"],
+      "fix": "Delete the adverb; if the sentence goes flat, the claim needs a fact instead."
+    },
+    {
+      "id": "W7", "family": "W", "kind": "tell", "name": "Claude-era idiom", "tier": "warn",
+      "registers": { "chat": "info" },
+      "regex": "\\bload-bearing\\b|\\b(?:do(?:es)?|doing|did) (?:a lot of|most of the|all the|the) heavy lifting\\b|\\b(?:earns?|earned|earning) (?:its|their|a) (?:place|keep|spot)\\b|\\bworth sitting with\\b|\\b(?:the )?honest (?:answer|take|version|truth) is\\b|\\b(?:lands|landed) (?:differently|well|hard|softly|flat)\\b|\\bin a (?:real|meaningful|genuine) (?:way|sense)\\b|\\bthe (?:quiet|hidden) (?:cost|win|part|work|truth)\\b|\\bnot nothing\\b",
+      "unless": "\\bload-bearing (?:walls?|beams?|structures?|columns?|capacity|elements?|members?)\\b",
+      "fix": "Say the literal thing: required, does most of the work, needed."
+    },
+    {
+      "id": "W8", "family": "W", "kind": "tell", "name": "AI-favored word density", "tier": "warn",
+      "registers": { "chat": "info", "legal": "info" },
+      "density": { "per1000": 8, "min": 4 },
+      "words": ["crucial", "vital", "essential", "comprehensive", "nuanced", "notable", "remarkable", "compelling", "versatile", "invaluable", "noteworthy", "myriad", "diverse", "profound", "significant", "enhance", "enhances", "enhanced", "enhancing", "landscape", "journey", "ecosystem", "paradigm", "insights", "resilience", "resilient", "advancements", "cornerstone", "linchpin", "bedrock", "hallmark", "unravel", "unravels", "unraveling", "resonate", "resonates", "resonating", "impactful", "actionable"],
+      "unless": "\\blandscape (?:mode|orientation|photos?|photography|paintings?|architect\\p{L}*|format|view)\\b|\\b(?:portrait and landscape|landscape and portrait)\\b|\\bvital signs\\b",
+      "fix": "Replace most of these with concrete nouns and verbs; one or two per page is fine."
+    },
+    {
+      "id": "W9", "family": "W", "kind": "house", "name": "First-person plural in product copy", "tier": "off",
+      "regex": "\\b(?:we|we['’](?:re|ve|ll|d)|us|our|ours|ourselves)\\b",
+      "fix": "Name the actor: the app, the company or the reader. Turn this on per project in .humanize.json."
+    },
+    {
+      "id": "X1", "family": "X", "kind": "tell", "name": "This commit or PR introduces", "tier": "off",
+      "registers": { "commit": "block", "pr": "warn", "release": "warn" },
+      "regex": "\\bthis (?:commit|PR|pull request|patch|change(?:set)?|MR|merge request|diff|branch) (?:introduces|adds|implements|updates|refactors|fixes|improves|enhances|removes|aims to|is designed to|ensures|addresses|provides|includes|makes|does|brings|delivers|resolves|streamlines|modifies|contains)\\b",
+      "fix": "Start with what changed and why: \"Fix crash when…\" or \"Sift now…\"."
+    },
+    {
+      "id": "X2", "family": "X", "kind": "tell", "name": "Vague change note", "tier": "off",
+      "registers": { "commit": "warn", "release": "warn", "store": "warn", "pr": "warn" },
+      "at": "line-start",
+      "regex": "(?:(?:minor |small |various |misc(?:ellaneous)? |general |some )?(?:bug ?fixes|fixes|improvements|changes|updates|tweaks|enhancements|cleanup|clean-up|polish)(?: and (?:performance |stability |other |minor )?(?:improvements|enhancements|fixes|updates|tweaks))?|update[ds]?|fix(?:ed|es)?|wip|stuff|more (?:fixes|changes)|refactor(?:ing|ed)?)[ \\t]*[.!]?[ \\t]*$",
+      "fix": "Name what changed for the reader: the bug, the screen, the new behavior."
+    },
+    {
+      "id": "X3", "family": "X", "kind": "tell", "name": "Tutorial-voice comment", "tier": "off",
+      "registers": { "comment": "warn" },
+      "at": "line-start",
+      "regex": "(?:step \\d+[:.)]|first,? we\\b|now,? we\\b|next,? we\\b|then,? we\\b|finally,? we\\b|here,? we\\b|here we go\\b|let['’]s\\b|we (?:need to|will|can|have to) (?:now )?(?:create|define|initiali[sz]e|set up|loop|iterate|check|call|return|import|declare|add|handle)\\b)",
+      "fix": "Say why the code does this, or delete the comment."
+    },
+    {
+      "id": "X4", "family": "X", "kind": "tell", "name": "Comment restates the code", "tier": "off",
+      "registers": { "comment": "warn" },
+      "at": "line-start",
+      "regex": "(?:(?:increment|decrement|initiali[sz]e|declare|define|create|instantiate|import|return|call|set|get|loop (?:through|over)|iterate (?:through|over)|check (?:if|whether)) (?:the |a |an |our )?(?:variable|counter|loop|function|method|result|value|array|list|object|instance|class|index|i|j|state|props?)\\b|(?:default )?constructor\\.?[ \\t]*$|getters? (?:and|&) setters?\\.?[ \\t]*$|end (?:of )?(?:if|for|while|loop|function|class|method)\\.?[ \\t]*$)",
+      "fix": "Delete it, or replace it with the reason the code exists."
+    },
+    {
+      "id": "X5", "family": "X", "kind": "tell", "name": "Emoji in log output", "tier": "warn",
+      "on": "src",
+      "extractors": ["script", "jsx", "swift"],
+      "regex": "(?:console\\.(?:log|info|warn|error|debug)|\\bprint|\\bdebugPrint|\\bNSLog|\\bos_log|\\blogger\\.\\w+|\\blog\\.\\w+|\\bLogger\\([^)]*\\)\\.\\w+)\\s*\\(\\s*[`'\"][^`'\"\\n]{0,80}?[\\u{1F300}-\\u{1FAFF}\\u{2600}-\\u{27BF}\\u{2B50}]",
+      "fix": "Log plain text; emoji break grep, log parsers and some terminals."
+    },
+    {
+      "id": "X6", "family": "X", "kind": "tell", "name": "Personified code", "tier": "off",
+      "registers": { "comment": "info", "commit": "info", "pr": "info", "docs": "info" },
+      "regex": "\\b(?:the|this|that|our|your|its) (?:function|method|helper|parser|loop|check|guard|test|tests|docstring|comment|compiler|linter|type ?checker|regex|query|hook|handler|wrapper|API|endpoint|code|caller|callee|cache|scheduler|retry|branch|build|script|gate|rule|scanner|server|client) (?:promises|bites|lies|forgets|insists|refuses|pretends|believes|hates|loves|happily|quietly|cheerfully|politely|honestly)\\b",
+      "fix": "Describe the behavior literally: returns, ignores, fails when."
+    },
+    {
+      "id": "X7", "family": "X", "kind": "tell", "name": "Assurance language in change descriptions", "tier": "off",
+      "registers": { "commit": "warn", "pr": "warn", "release": "warn", "comment": "info" },
+      "regex": "\\b(?:improv|enhanc)(?:e|es|ed|ing) (?:the )?(?:overall )?(?:clarity|readability|flow|consistency|maintainability|robustness|reliability|user experience|UX|code quality|structure|organi[sz]ation)\\b|\\b(?:streamlin|refin|polish|tighten)(?:e|es|ed|ing) (?:the )?(?:code|logic|flow|tone|wording|implementation|structure|process|copy|language)\\b|\\bwhile (?:preserving|maintaining|keeping|retaining) (?:the )?(?:existing|original|current|same|overall|core)\\b|\\bensur(?:e|es|ed|ing) (?:that )?(?:consistency|robustness|reliability|maintainability|clarity|proper|correct|seamless|smooth|optimal|a (?:seamless|smooth|consistent|robust))\\b|\\b(?:implement|add|introduc|creat)(?:e|es|ed|ing|s)? (?:a |an )?(?:comprehensive|robust|complete|full-featured|seamless|intelligent|advanced|sophisticated) [\\p{L}-]+",
+      "fix": "Say what changed and what it fixes; drop the quality adjectives."
+    },
+    {
+      "id": "X8", "family": "X", "kind": "tell", "name": "Done-report language", "tier": "off",
+      "registers": { "commit": "warn", "pr": "warn", "release": "warn", "comment": "warn", "docs": "info" },
+      "regex": "\\bsuccessfully (?:implemented|completed|added|updated|fixed|created|integrated|refactored|resolved|migrated|deployed|tested|verified|built)\\b|\\bI(?:['’]ve| have) (?:successfully )?(?:completed|finished) (?:the|all|your) (?:implementation|task|changes|requested)\\b",
+      "fix": "Say what changed; \"successfully\" adds nothing a reader can check."
+    },
+    {
+      "id": "X9", "family": "X", "kind": "tell", "name": "Change-history comment", "tier": "off",
+      "registers": { "comment": "warn" },
+      "regex": "\\b(?:previously|formerly) (?:we|this|it|the code|the function|used|was|were|did|had)\\b|\\bused to (?:be|use|call|return|do)\\b|\\b(?:was|were) changed (?:to|from)\\b|\\bchanged from\\b|\\bno longer (?:uses|calls|returns|needs)\\b|\\bnow uses\\b|\\bupdated to use\\b|\\bas discussed\\b|\\b(?:AI|agent|Claude|Copilot|ChatGPT|GPT|Cursor)(?:-generated| generated)\\b|\\bthis (?:function|method|class|file|helper) was (?:added|created|introduced|written) to\\b",
+      "fix": "Describe the code as it is; the history goes in the commit message."
+    },
+    {
+      "id": "X10", "family": "X", "kind": "tell", "name": "Letter form in dev text", "tier": "off",
+      "registers": { "commit": "warn", "pr": "warn", "comment": "warn", "docs": "info" },
+      "regex": "\\bDear (?:[\\p{L}-]+ )?(?:Team|Maintainers?|Developers?|Sir|Madam|Hiring Manager|Reviewers?)\\b|\\b(?:Best|Kind|Warm|Warmest) regards\\b|\\bThank you for your time and consideration\\b|\\bSincerely,|\\bI hope this (?:message|PR|pull request|issue|comment) finds you well\\b",
+      "fix": "Drop the salutation and sign-off; open with the change or the problem."
+    }
+  ]
+}
