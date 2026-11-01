@@ -28,7 +28,7 @@ One catalog of AI writing tells with stable ids (`references/patterns.md`: W1, S
 
 1. **Register.** Take it from the path or from where the user says the text goes. Pasted text with nowhere named is `prose`, or `landing` when it sells something (a product pitch, a call to action). When two registers fit, use the stricter. Ask only when the destination changes the rules and can't be inferred.
 2. **Scan.** `SCAN --register <r> <path>`, or pipe pasted text to `SCAN --stdin --register <r>`.
-3. **Judge.** Read the judgment section of `references/patterns.md` (S23 to S29, K1 to K6), then read the input once for those tells.
+3. **Judge.** Read the judgment section of `references/patterns.md` (S23 to S31, K1 to K6), then read the input once for those tells.
 4. **Rewrite.** Fix every block hit. Fix every warn hit unless its entry's "Leave:" line covers it (`SCAN --explain S3` prints the entry). Then fix the judgment findings. Fill each gap from "What to put back" and the profile in `references/voice.md`, with facts from the source text or the project (code, docs, product brief) only. A gap nothing fills stays open and becomes a question in step 7.
 5. **Re-scan** the result until it has zero block hits.
 6. **Last pass.** Read it as a skeptical reader: what still sounds machine-written? Fix that.
@@ -52,6 +52,7 @@ Before committing public copy, `SCAN` it to zero block hits.
 ## Scanner
 
 - `SCAN --help` lists the flags. Exit 0 clean, 1 on a block hit or an expired waiver, 2 on a usage or config error.
+- `--github` prints hits as GitHub Actions annotations; `action.yml` and `.pre-commit-hooks.yaml` wrap the scanner as a gate (`references/audit.md` §7).
 - `SCAN --explain ID` shows one rule, its tier in every register and its catalog entry with the "Leave:" cases; `--list-rules --register R` shows them all.
 - `--summary` and `--json` are for audits; `--git-log N` reads commit messages; `--comments` adds code comments. A phrase that repeats on one line reports once, marked ×n (`count` in the JSON).
 - A repo's `.humanize.json` holds path registers, exemptions, tier overrides, project rules and waivers with a reason and an expiry (`references/audit.md` §7). The scanner reads the nearest one above the first path, or above the working directory with `--stdin`; `--no-config` ignores it.

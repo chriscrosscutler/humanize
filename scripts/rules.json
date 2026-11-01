@@ -273,6 +273,12 @@
       "fix": "Say what is expected: \"Enter an email address like name@example.com.\""
     },
     {
+      "id": "P23", "family": "P", "kind": "tell", "name": "Document narration", "tier": "warn",
+      "registers": { "chat": "info", "docs": "info", "legal": "off" },
+      "regex": "\\bthis (?:article|post|blog post|guide|tutorial|piece|essay|section|chapter|thread|video|write-up) (?:will )?(?:explores?|discuss(?:es)?|covers?|walks? (?:you )?through|takes? (?:you on )?a (?:closer |deep |deeper |quick )?look at|examines?|unpacks?|breaks? down|dives? into|delves? into|aims to|sets out to)\\b|\\bby the end of this (?:article|post|blog post|guide|tutorial|piece|section|chapter|thread|video)\\b|\\b(?:in|throughout) this (?:section|chapter|thread|video),? (?:we|I|you)(?:['’]ll| will) (?:explore|discuss|cover|look at|learn|examine|unpack|break down|go over|walk through|dive into)\\b",
+      "fix": "Cut the sentence about the text and start with its first point."
+    },
+    {
       "id": "S1", "family": "S", "kind": "tell", "name": "Denial pivot", "tier": "warn",
       "registers": { "landing": "block", "store": "block", "social": "block", "email": "block", "release": "block" },
       "regex": "\\b(?:it|this|that|they|these|those|he|she|we|you|[\\p{L}-]+)(?:['’]s|['’]re| is| are| was| were) not (?:just|only|merely|simply|about|really about|even about) [^.!?;\\n]{1,60}?[,;:—–.]\\s*(?:it|this|that|they|these|those|he|she|we|you)(?:['’]s|['’]re| is| are| was| were)\\b|\\b(?:isn['’]t|aren['’]t|wasn['’]t|weren['’]t|doesn['’]t|don['’]t|didn['’]t) (?:just|only|merely|simply|really about|even|about) [^.!?;\\n]{1,60}?[,;:—–.]\\s*(?:(?:it|this|that|they|these|those)(?:['’]s|['’]re| is| are| does| do| did| was| were)?|(?:he|she|we|you)(?:['’]s|['’]re| is| are| does| do| did| was| were))\\b",

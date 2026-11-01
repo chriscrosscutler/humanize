@@ -1,0 +1,11 @@
+{
+  "description": "Reports humanize block hits in the text Claude just wrote. Never blocks a write.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/hook.mjs\" 2>/dev/null || true" }]
+      }
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "humanize",
+  "owner": { "name": "Chockstone Labs", "url": "https://chockstonelabs.com" },
+  "description": "Install humanize as a Claude Code plugin, with its hook.",
+  "plugins": [
+    {
+      "name": "humanize",
+      "source": "./",
+      "description": "Finds the patterns that make text read as machine-written, with tiers per surface (landing, store, UI strings, docs, commits, PRs), and rewrites them without changing a fact.",
+      "category": "productivity",
+      "keywords": ["writing", "editing", "copy", "lint", "humanize", "ai-writing"]
+    }
+  ]
+}

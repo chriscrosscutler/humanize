@@ -1,0 +1,43 @@
+name: humanize
+description: Fail a pull request on AI writing tells in copy, docs, UI strings and commit messages, with annotations on the lines.
+author: Chockstone Labs
+branding:
+  icon: type
+  color: purple
+inputs:
+  paths:
+    description: Files or folders to scan, separated by spaces.
+    default: "."
+  register:
+    description: One register for every file. Empty infers it from each path.
+    default: ""
+  fail-on:
+    description: Lowest tier that fails the step, block or warn.
+    default: block
+  commits:
+    description: Also scan these commit messages, as a count or a range such as origin/main..HEAD (check out with fetch-depth 0).
+    default: ""
+  args:
+    description: More scan.mjs flags, such as --comments or --only W,P.
+    default: ""
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        HZ_PATHS: ${{ inputs.paths }}
+        HZ_REGISTER: ${{ inputs.register }}
+        HZ_FAIL_ON: ${{ inputs.fail-on }}
+        HZ_COMMITS: ${{ inputs.commits }}
+        HZ_ARGS: ${{ inputs.args }}
+      run: |
+        scan="$GITHUB_ACTION_PATH/scripts/scan.mjs"
+        flags=(--github --fail-on "$HZ_FAIL_ON")
+        if [ -n "$HZ_REGISTER" ]; then flags+=(--register "$HZ_REGISTER"); fi
+        status=0
+        # Paths and args split on spaces, as on a command line.
+        node "$scan" "${flags[@]}" $HZ_ARGS $HZ_PATHS || status=$?
+        if [ -n "$HZ_COMMITS" ]; then
+          node "$scan" --github --fail-on "$HZ_FAIL_ON" --git-log "$HZ_COMMITS" || { s=$?; if [ "$status" -eq 0 ]; then status=$s; fi; }
+        fi
+        exit "$status"

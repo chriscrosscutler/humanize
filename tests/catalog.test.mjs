@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadRules } from "../scripts/scan.mjs";
+import { loadRules, run } from "../scripts/scan.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const md = readFileSync(join(ROOT, "references/patterns.md"), "utf8");
@@ -50,4 +50,29 @@ test("quoted examples fire their rule and quoted rewrites do not", () => {
 test("SKILL.md names only files that exist", () => {
   const skill = readFileSync(join(ROOT, "SKILL.md"), "utf8");
   for (const [, p] of skill.matchAll(/`((?:references|scripts)\/[\w.-]+)`/g)) assert.ok(existsSync(join(ROOT, p)), p);
+});
+
+test("README.md scans clean as docs", () => {
+  const out = [];
+  const code = run([join(ROOT, "README.md"), "--register", "docs", "--no-config"], { out: (s) => out.push(s), err: (s) => out.push(s), cwd: ROOT });
+  assert.equal(code, 0, out.join("\n"));
+});
+
+test("the plugin, marketplace, hook and package manifests agree", () => {
+  const json = (p) => JSON.parse(readFileSync(join(ROOT, p), "utf8"));
+  const plugin = json(".claude-plugin/plugin.json");
+  const market = json(".claude-plugin/marketplace.json");
+  const pkg = json("package.json");
+  assert.equal(plugin.name, "humanize");
+  assert.equal(pkg.version, plugin.version, "package.json and plugin.json versions");
+  assert.deepEqual(market.plugins.map((p) => [p.name, p.source]), [["humanize", "./"]]);
+  assert.equal(market.plugins[0].description, plugin.description);
+  const hook = json("hooks/hooks.json").hooks.PostToolUse[0];
+  assert.equal(hook.matcher, "Write|Edit|MultiEdit");
+  const script = hook.hooks[0].command.match(/\$\{CLAUDE_PLUGIN_ROOT\}\/([\w./-]+)/)[1];
+  assert.ok(existsSync(join(ROOT, script)), script);
+  assert.ok(existsSync(join(ROOT, pkg.bin["humanize-scan"])));
+  const action = readFileSync(join(ROOT, "action.yml"), "utf8");
+  assert.match(action, /\$GITHUB_ACTION_PATH\/scripts\/scan\.mjs/);
+  assert.match(action, /--github/);
 });

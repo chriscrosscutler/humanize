@@ -435,3 +435,20 @@ test("S15 skips a triple that starts inside a two-word list item", () => {
   assert.equal(s15.length, 3);
   assert.ok(!s15.some((h) => /overrides/.test(h.match)));
 });
+
+test("--github prints each hit as an annotation on its file and line", () => {
+  withRepo({ "site/a, b.md": "Certainly! Sort photos — fast.\n" }, (dir) => {
+    const r = cli(["--github", "site/a, b.md"], { cwd: dir });
+    assert.equal(r.code, 1);
+    assert.match(r.out, /^::error file=site\/a%2C b\.md,line=1,title=humanize C1::Certainly!/m);
+    assert.match(r.out, /^::error file=site\/a%2C b\.md,line=1,title=humanize F1::/m);
+    assert.match(r.out, /^humanize: \d+ block/m);
+  });
+});
+
+test("a reader that closes the pipe early ends the scan quietly", () => {
+  const scanPath = join(dirname(fileURLToPath(import.meta.url)), "../scripts/scan.mjs");
+  const r = spawnSync("sh", ["-c", `"${process.execPath}" "${scanPath}" --register landing "${join(FIX, "ai-landing.md")}" | head -1`], { encoding: "utf8" });
+  assert.equal(r.stderr, "");
+  assert.match(r.stdout, /ai-landing\.md:1 +P7 block/);
+});

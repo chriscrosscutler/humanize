@@ -51,6 +51,7 @@ an expired waiver, 2 usage or config error.
   --comments            also read code comments (register "comment")
   --summary             per-file table, census and the most frequent rules
   --json                everything, machine-readable
+  --github              hits as GitHub Actions annotations on the changed lines
   --all                 include info-tier hits in the text output
   -q, --quiet           block-tier hits only
   --fail-on block|warn  lowest tier that exits 1 (default block)
@@ -1914,6 +1915,18 @@ function formatHit(file, h) {
   return `${file}:${h.line}  ${h.id} ${h.tier}${times}  ${what}"${h.excerpt}"  → ${h.fix}${h.note ? `  [${h.note}]` : ""}`;
 }
 
+// GitHub Actions workflow commands: https://docs.github.com/actions/reference/workflow-commands-for-github-actions
+const ghData = (s) => s.replaceAll("%", "%25").replaceAll("\r", "%0D").replaceAll("\n", "%0A");
+const ghProp = (s) => ghData(s).replaceAll(":", "%3A").replaceAll(",", "%2C");
+const GH_LEVEL = { block: "error", warn: "warning", info: "notice" };
+
+function githubHit(r, h) {
+  const what = h.match && h.match.length <= 40 && h.excerpt.length > h.match.length + 3 ? `${h.match}: ` : "";
+  // A commit message has no file to pin to; its sha goes in the title.
+  const where = r.extractor === "commit" ? `title=${ghProp(`humanize ${h.id} (${r.label})`)}` : `file=${ghProp(r.label)},line=${h.line},title=${ghProp(`humanize ${h.id}`)}`;
+  return `::${GH_LEVEL[h.tier]} ${where}::${ghData(`${what}"${h.excerpt}" → ${h.fix}${h.note ? ` [${h.note}]` : ""}`)}`;
+}
+
 function tierList(rule, rules, cfg, register) {
   if (register) return tierFor(rule, register, cfg, rules);
   const def = tierFor(rule, "prose", cfg, rules);
@@ -2013,6 +2026,9 @@ function parseArgs(argv) {
         break;
       case "--json":
         o.json = true;
+        break;
+      case "--github":
+        o.github = true;
         break;
       case "--summary":
         o.summary = true;
@@ -2225,12 +2241,12 @@ export function run(argv, io = {}) {
       for (const h of hs) {
         const k = (per.get(h.id) ?? 0) + 1;
         per.set(h.id, k);
-        if (k <= opts.max) out(formatHit(r.label, h));
+        if (k <= opts.max) out(opts.github ? githubHit(r, h) : formatHit(r.label, h));
       }
       for (const [id, k] of per) if (k > opts.max) out(`${r.label}  ${id}: ${k - opts.max} more (--max or --json for all)`);
     }
   for (const w of cfg.expired)
-    out(`humanize: waiver EXPIRED ${w.expires}: ${w.rule} ${w.path}${w.text ? ` "${w.text}"` : ""} (${w.reason}). Fix the text, or re-read it and renew the waiver.`);
+    out(`${opts.github ? "::error::" : ""}humanize: waiver EXPIRED ${w.expires}: ${w.rule} ${w.path}${w.text ? ` "${w.text}"` : ""} (${w.reason}). Fix the text, or re-read it and renew the waiver.`);
   for (const w of unused) out(`humanize: waiver unused: ${w.rule} ${w.path}${w.text ? ` "${w.text}"` : ""}. Remove it.`);
   if (unreadable) out(`humanize: skipped ${plural(unreadable, "binary or oversized file")}`);
   const parts = [`${totals.block} block`, `${totals.warn} warn`];
@@ -2246,4 +2262,11 @@ const invoked = (() => {
     return false;
   }
 })();
-if (invoked) process.exitCode = run(process.argv.slice(2));
+if (invoked) {
+  // A reader that stops early (`| head`) closes the pipe, which is not an error.
+  process.stdout.on("error", (e) => {
+    if (e.code !== "EPIPE") throw e;
+    process.exit(process.exitCode ?? 0);
+  });
+  process.exitCode = run(process.argv.slice(2));
+}

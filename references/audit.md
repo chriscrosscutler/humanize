@@ -41,7 +41,7 @@ SCAN --git-log 50 --summary
 
 ## 4. Judgment pass
 
-Read in full only the highest-traffic surfaces, in this order: landing hero and first screen, store subtitle and first three lines, onboarding, paywall, permission prompts, errors and empty states, transactional email, README intro. Check each against S23 to S29 and K1 to K6 in `patterns.md`. K2 means opening the code behind each claim: a claim with no code behind it is a finding, whatever its wording. Check claims in this order: everything above the fold; then prices and limits, platforms and versions, privacy, and numbers. Stop after about 20 claims, or once ten in a row hold up, and label the K2 rows a spot check.
+Read in full only the highest-traffic surfaces, in this order: landing hero and first screen, store subtitle and first three lines, onboarding, paywall, permission prompts, errors and empty states, transactional email, README intro. Check each against S23 to S31 and K1 to K6 in `patterns.md`. K2 means opening the code behind each claim: a claim with no code behind it is a finding, whatever its wording. Check claims in this order: everything above the fold; then prices and limits, platforms and versions, privacy, and numbers. Stop after about 20 claims, or once ten in a row hold up, and label the K2 rows a spot check.
 
 Do this inline. A repo with more than about 150K tokens of copy may justify a workflow under your global budget rules (disjoint lenses, at most 4 agents, every finder carrying evidence and a refutation attempt, no verify phase).
 
@@ -58,7 +58,7 @@ Snapshot: <git sha>, plus the files that were dirty at scan time.
 | Surface | File:line | Id | Tier | Text | Fix |
 |---|---|---|---|---|---|
 
-Judgment (S23 to S29, K1 to K6):
+Judgment (S23 to S31, K1 to K6):
 | Surface | File:line | Id | Finding | Fix |
 |---|---|---|---|---|
 
@@ -88,6 +88,8 @@ For any repo that ships copy:
 2. Add `"lint:prose": "node scripts/humanize/scan.mjs --quiet ."` to `package.json` and chain it into `lint:fast`, so pre-push and CI both run it. The default skip list drops tests, fixtures and build output, and the scanner never scans its own files, so a new repo is green on arrival.
 3. Add `.humanize.json` at the repo root (below); exempt internal docs there.
 4. When the skill's rules change, re-vendor: `for f in scan.mjs rules.json; do cmp -s scripts/humanize/$f ~/.claude/skills/humanize/scripts/$f || echo "$f drifted"; done` shows drift. CI runs the vendored copy.
+
+A repo on GitHub can skip the vendoring: `uses: chriscrosscutler/humanize@<tag>` runs the scanner with `--github`, so each hit lands as an annotation on its line, and its `commits` input scans a range of commit messages. `.pre-commit-hooks.yaml` offers `humanize` for files and `humanize-commit-msg` for the message.
 
 Exit codes: 0 clean, 1 on a block hit or an expired waiver, 2 on a usage or config error.
 

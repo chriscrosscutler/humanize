@@ -1,0 +1,16 @@
+# pre-commit (https://pre-commit.com) hooks. Point `rev` at a tag or commit:
+#   - repo: https://github.com/chriscrosscutler/humanize
+#     rev: <sha>
+#     hooks: [{ id: humanize }, { id: humanize-commit-msg }]
+- id: humanize
+  name: humanize
+  description: Fail on block-tier AI writing tells in copy, docs and UI strings.
+  entry: humanize-scan
+  language: node
+  files: \.(md|mdx|markdown|txt|rst|adoc|html?|xhtml|mjml|astro|vue|svelte|jsx|tsx|swift|xcstrings|strings|stringsdict|arb)$
+- id: humanize-commit-msg
+  name: humanize (commit message)
+  description: Fail on block-tier AI writing tells in the commit message.
+  entry: humanize-scan --register commit
+  language: node
+  stages: [commit-msg]

@@ -19,6 +19,8 @@ Read the whole text once for these after the scanner is clean.
 **S27 Setup and reversal (judgment).** A paragraph built as misconception, pause, correction ("Most people think backups are enough. They aren't.") when no reader held the misconception → state the finding.
 **S28 Orbit then reveal (judgment).** Clauses that circle before landing ("When it comes to large libraries, and especially when duplicates pile up, what matters most is speed") → "Speed matters most for large libraries." Claude-era drafts run long: one sample found responses three times longer and sentences 58% longer than the previous model's.
 **S29 Uniform section shape (judgment).** Every section has the same skeleton: heading, one-line intro, three bullets, a bolded takeaway → let each section's length follow its content and merge the thin ones.
+**S30 Heading echo (judgment).** A section's first sentence repeats its heading ("## Exporting" then "Exporting lets you save your library as a file") → open with what the heading didn't say: "Choose File > Export, then a folder." Leave: a definition section, where the term has to be named.
+**S31 Re-explaining (judgment).** The text explains what its reader already knows ("As a developer, you know bugs are costly") or restates the paragraph before it in new words → cut to what is new for that reader. Leave: a recap at the top of a long reference page, under its own heading.
 **K1 Claim with no number (judgment).** "Much faster imports" → "Imports 2,000 photos in 40 seconds on an M2 MacBook Air", using a number you measured; with no number, ask for one or cut the claim. Leave: claims a reader can check at a glance.
 **K2 Claim not derivable from source (judgment).** Copy promises a capability, limit or guarantee the code doesn't implement ("works offline", "end-to-end encrypted", "never uploads anything") → check the app source; fix the copy or flag the gap. Every public claim must trace to source (RULES §7).
 **K3 Empty social proof (judgment).** "Loved by photographers everywhere", a logo wall or a star rating with nothing behind it → cut it until there is a real count, a source and a date.
@@ -90,6 +92,7 @@ Flag none of these by themselves. Several weak signs together mean far more than
 **P20 Generic error message.** "Something went wrong." → "Couldn't save the photo. Check that the disk has space, then try again." Leave: a true last-resort fallback that offers a retry and a way to reach support.
 **P21 Aphorism formula.** "Trust is the new currency of the web." → the literal claim the metaphor stands for. Leave: a quoted maxim.
 **P22 Blame wording in UI.** "Invalid email." → "Enter an email address like name@example.com." Leave: developer-facing errors ("invalid JSON at line 4").
+**P23 Document narration.** "This guide walks you through setting up sync." → "Turn on sync in Settings, then pick a folder." Also "This article explores", "By the end of this post". "In this guide, we'll" is P5. Leave: a scope note at the top of a long report, and docs whose style guide opens pages with "This document describes".
 
 ## S: structure
 

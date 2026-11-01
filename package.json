@@ -1,0 +1,14 @@
+{
+  "name": "humanize-scan",
+  "version": "1.1.0",
+  "private": true,
+  "description": "The humanize scanner: flags AI writing tells in copy, docs, UI strings and commit messages. No dependencies.",
+  "homepage": "https://github.com/chriscrosscutler/humanize",
+  "repository": "github:chriscrosscutler/humanize",
+  "author": "Chockstone Labs (https://chockstonelabs.com)",
+  "type": "module",
+  "bin": { "humanize-scan": "scripts/scan.mjs" },
+  "files": ["scripts/", "references/patterns.md"],
+  "engines": { "node": ">=18" },
+  "scripts": { "test": "node --test" }
+}
