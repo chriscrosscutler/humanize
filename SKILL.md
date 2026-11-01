@@ -28,7 +28,7 @@ One catalog of AI writing tells with stable ids (`references/patterns.md`: W1, S
 
 1. **Register.** Take it from the path or from where the user says the text goes. Pasted text with nowhere named is `prose`, or `landing` when it sells something (a product pitch, a call to action). When two registers fit, use the stricter. Ask only when the destination changes the rules and can't be inferred.
 2. **Scan.** `SCAN --register <r> <path>`, or pipe pasted text to `SCAN --stdin --register <r>`.
-3. **Judge.** Read the judgment section of `references/patterns.md` (S23 to S31, K1 to K6), then read the input once for those tells.
+3. **Judge.** Read the judgment section of `references/patterns.md` (S23 to S32, K1 to K6), then read the input once for those tells.
 4. **Rewrite.** Fix every block hit. Fix every warn hit unless its entry's "Leave:" line covers it (`SCAN --explain S3` prints the entry). Then fix the judgment findings. Fill each gap from "What to put back" and the profile in `references/voice.md`, with facts from the source text or the project (code, docs, product brief) only. A gap nothing fills stays open and becomes a question in step 7.
 5. **Re-scan** the result until it has zero block hits.
 6. **Last pass.** Read it as a skeptical reader: what still sounds machine-written? Fix that.

@@ -15,7 +15,7 @@
 
 <p align="center">
   <img alt="Claude Code skill" src="https://img.shields.io/badge/Claude_Code-skill-4A47F5?style=flat-square&labelColor=0A1A8C">
-  <img alt="102 rules" src="https://img.shields.io/badge/rules-102-4A47F5?style=flat-square&labelColor=0A1A8C">
+  <img alt="103 rules" src="https://img.shields.io/badge/rules-103-4A47F5?style=flat-square&labelColor=0A1A8C">
   <img alt="14 registers" src="https://img.shields.io/badge/registers-14-4A47F5?style=flat-square&labelColor=0A1A8C">
   <img alt="Apache 2.0 license" src="https://img.shields.io/badge/license-Apache_2.0-4A47F5?style=flat-square&labelColor=0A1A8C">
   <img alt="Node, no dependencies" src="https://img.shields.io/badge/Node-no_dependencies-7A2CF0?style=flat-square&labelColor=0A1A8C">
@@ -146,7 +146,7 @@ Checked November 1, 2026, against the three most-starred humanizer skills on Git
 
 | | humanize | [humanizer](https://github.com/blader/humanizer) | [stop-slop](https://github.com/hardikpandya/stop-slop) | [avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing) |
 |---|---|---|---|---|
-| Catalog | 102 rules and 15 judgment checks | 26 patterns | One page of rules | 74 pattern categories |
+| Catalog | 103 rules and 16 judgment checks | 26 patterns | One page of rules | 74 pattern categories |
 | Scanner that runs without a model | Node, no dependencies | No | No | An npm package |
 | Rules change with the surface | 14 registers, read from the file path | No | No | Context profiles |
 | CI gate | GitHub Action, pre-commit, exit codes | No | No | GitHub Action, pre-commit |

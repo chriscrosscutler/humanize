@@ -60,7 +60,7 @@ const AI = [
   ["ai-landing.md", "site/index.md", "C1 C3 C8 F1 P1 P2 P3 P4 P7 P9 S1 S10 S13 S4 S8 W1 W2 W3", "C4 F6"],
   ["ai-structure.md", "docs/notes.md", "C10 C3 F15", "C13 H8 P17 P18 P19 P21 P3 P9 S17 S18 S19 S20 S21 W1"],
   ["ai-structure.md", "site/notes.md", "C10 C3 F15 P16 P3 P9 S17 W1", "S22"],
-  ["Hero.tsx", "src/Hero.tsx", "F1 P7 W2 W3 W4", "P9 X5"],
+  ["Hero.tsx", "src/Hero.tsx", "F1 P24 P7 W2 W3 W4", "P9 X5"],
   ["ContentView.swift", "App/ContentView.swift", "W3", "P20 X5"],
   ["Err.swift", "App/Err.swift", "", "P20"],
   ["Localizable.strings", "App/en.lproj/Localizable.strings", "W3", "P16"],
