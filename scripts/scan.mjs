@@ -65,7 +65,15 @@ an expired waiver, 2 usage or config error.
   --label NAME          display name for --stdin; its path picks the extractor
                         and register (site/copy.html reads as landing)
   --rules PATH          use another rules.json (default: the one beside this
-                        script)`;
+                        script)
+  --judge               also ask TypeSafe's Jev the questions regexes cannot
+                        (needs a key; see the README). Hits join the output,
+                        and a coverage row lists what was not checked
+  --jev-budget USD      spend limit for --judge (default from judge.json)
+  --no-jev              do not call Jev even with --judge (also HUMANIZE_JEV=0
+                        or "jev": false in .humanize.json)
+  --jev-untrusted       with --judge, also run probes not yet marked trusted;
+                        their hits are info-tier`;
 
 // ── small helpers ───────────────────────────────────────────────────────────
 
@@ -1766,7 +1774,7 @@ export function applyWaivers(hits, rel, cfg) {
 
 // ── config ──────────────────────────────────────────────────────────────────
 
-const CONFIG_KEYS = ["paths", "exempt", "rules", "custom", "waivers"];
+const CONFIG_KEYS = ["paths", "exempt", "rules", "custom", "waivers", "jev"];
 
 export const emptyConfig = () => ({ path: null, dir: null, paths: [], exempt: [], rules: {}, custom: [], waivers: [], expired: [], errors: [] });
 
@@ -1780,6 +1788,16 @@ export function findConfig(dir) {
     const up = dirname(d);
     if (up === d) return null;
     d = up;
+  }
+}
+
+/** Ids of the judgment tells Jev checks (S24, K3…), so a config can tier or waive them. */
+function judgeIds() {
+  try {
+    const j = JSON.parse(readFileSync(resolve(HERE, "judge.json"), "utf8"));
+    return [...Object.values(j.probes ?? {}).map((p) => p.id), ...Object.entries(j.code ?? {}).filter(([, v]) => v.unit).map(([k]) => k)];
+  } catch {
+    return [];
   }
 }
 
@@ -1798,6 +1816,10 @@ export function loadConfig(path, { today, rules }) {
     return cfg;
   }
   for (const k of Object.keys(raw)) if (!k.startsWith("$") && !CONFIG_KEYS.includes(k)) err(`${k}: unknown key; expected ${CONFIG_KEYS.join(", ")}`);
+  if ("jev" in raw) {
+    if (typeof raw.jev === "boolean") cfg.jev = raw.jev;
+    else err("jev: expected true or false");
+  }
   if (raw.paths !== undefined) {
     const ok = Array.isArray(raw.paths) && raw.paths.every((p) => Array.isArray(p) && p.length === 2 && typeof p[0] === "string" && rules.registerNames.includes(p[1]));
     if (ok) cfg.paths = raw.paths;
@@ -1816,7 +1838,7 @@ export function loadConfig(path, { today, rules }) {
         else cfg.custom.push({ family: "Q", kind: "house", tier: "warn", name: r.id, ...r });
       }
   }
-  const ids = new Set([...rules.rules.map((r) => r.id), ...cfg.custom.map((r) => r.id)]);
+  const ids = new Set([...rules.rules.map((r) => r.id), ...cfg.custom.map((r) => r.id), ...judgeIds()]);
   if (raw.rules !== undefined) {
     if (!raw.rules || typeof raw.rules !== "object" || Array.isArray(raw.rules)) err("rules: expected { id: tier | { tier, registers } }");
     else {
@@ -1993,6 +2015,20 @@ function summarize(results, totals, out) {
   out(`${per1k} block+warn hits per 1,000 words`);
 }
 
+/** The --judge coverage row, then what Jev left for a hand read. */
+function jevRow(jev) {
+  if (jev.not_sent?.length && jev.status === "off" && !jev.checked.length && !jev.not_checked.length)
+    return [`jev: not sent (register ${[...new Set(jev.not_sent.map((n) => n.register))].join(", ")})`];
+  const spent = `$${(jev.usd ?? 0).toFixed(4)}`;
+  const lines = [`jev: ${jev.status}, ${plural(jev.checked.length, "probe")} checked, ${jev.unsettled.length} unsettled (read by hand), ${jev.not_checked.length} not checked, ${spent} spent`];
+  for (const u of jev.unsettled) lines.push(`  ${u.file ? `${u.file}:` : "line "}${u.line}  ${u.key} unsettled${u.why ? ` (${u.why})` : ""}`);
+  if (jev.not_checked.length) lines.push(`  not checked: ${jev.not_checked.map((n) => `${n.key} (${n.why})`).join(", ")}`);
+  for (const r of jev.rates ?? []) lines.push(`  ${r.file}: ${r.per_1000} Jev tells per 1,000 words; human ${r.register} median ${r.human_median}`);
+  for (const n of jev.not_sent ?? []) lines.push(`  not sent: ${n.file} (register ${n.register})`);
+  for (const n of jev.notes ?? []) lines.push(`  ${n}`);
+  return lines;
+}
+
 const localDate = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -2001,7 +2037,7 @@ const localDate = () => {
 // ── CLI ─────────────────────────────────────────────────────────────────────
 
 function parseArgs(argv) {
-  const o = { paths: [], stdin: false, gitLog: null, register: null, comments: false, json: false, summary: false, all: false, quiet: false, failOn: "block", only: null, max: 20, config: null, noConfig: false, list: false, explain: null, label: null, rules: RULES_PATH, help: false };
+  const o = { paths: [], stdin: false, gitLog: null, register: null, comments: false, json: false, summary: false, all: false, quiet: false, failOn: "block", only: null, max: 20, config: null, noConfig: false, list: false, explain: null, label: null, rules: RULES_PATH, help: false, judge: false, jevBudget: null, noJev: false, jevUntrusted: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     const val = () => {
@@ -2067,6 +2103,21 @@ function parseArgs(argv) {
         break;
       case "--rules":
         o.rules = val();
+        break;
+      case "--judge":
+        o.judge = true;
+        break;
+      case "--jev-budget": {
+        const v = parseFloat(val());
+        if (!Number.isFinite(v) || v < 0) throw new Error("--jev-budget takes a dollar amount");
+        o.jevBudget = v;
+        break;
+      }
+      case "--no-jev":
+        o.noJev = true;
+        break;
+      case "--jev-untrusted":
+        o.jevUntrusted = true;
         break;
       case "-h":
       case "--help":
@@ -2164,7 +2215,9 @@ export function run(argv, io = {}) {
     const label = opts.label ?? "<stdin>";
     const register = opts.register ?? (opts.label ? inferRegister(label, cfg, rules) : "prose");
     const extractor = register === "commit" ? "commit" : extractorFor(label) ?? "markdown";
-    units.push({ label, rel: label, src: readStdin(), register, extractor, ext: extname(label).toLowerCase(), comments: opts.comments });
+    // With --judge and nothing naming the register, Jev may name it (judge.mjs).
+    const inferJev = opts.judge && !opts.register && !opts.label;
+    units.push({ label, rel: label, src: readStdin(), register, extractor, ext: extname(label).toLowerCase(), comments: opts.comments, inferJev });
   }
   if (opts.gitLog) {
     let commits;
@@ -2204,11 +2257,24 @@ export function run(argv, io = {}) {
   }
 
   const results = units.map((u) => scanUnit(u, { rules, cfg }));
+  const rc = { opts, cfg, today, root, unreadable, out };
+  // --judge loads judge.mjs on demand; plain scans, the hook and the Action never do.
+  if (opts.judge) {
+    const rescan = (u) => scanUnit(u.register === "commit" ? { ...u, extractor: "commit" } : u, { rules, cfg });
+    return import("./judge.mjs").then((m) => m.runJudged({ opts, units, results, rules, cfg, rescan, report: (jev) => report(rc, results, jev) }, io));
+  }
+  return report(rc, results, null);
+}
+
+/** Waivers, totals and output for scanned units; `jev` is the --judge coverage, if any. */
+function report({ opts, cfg, today, root, unreadable, out }, results, jev) {
   for (const r of results) r.hits = applyWaivers(r.hits, r.rel, cfg);
   const count = (t) => results.reduce((n, r) => n + r.hits.filter((h) => h.tier === t).length, 0);
   const totals = { files: results.length, words: results.reduce((n, r) => n + r.words, 0), block: count("block"), warn: count("warn"), info: count("info") };
   const unused = cfg.waivers.filter((w) => !w.used && results.some((r) => globMatch(w.path, r.rel)));
-  const failed = totals.block > 0 || (opts.failOn === "warn" && totals.warn > 0) || cfg.expired.length > 0;
+  // A Jev warn is a reading aid: it never fails a run (only a block does).
+  const hardWarn = results.reduce((n, r) => n + r.hits.filter((h) => h.tier === "warn" && !h.source).length, 0);
+  const failed = totals.block > 0 || (opts.failOn === "warn" && hardWarn > 0) || cfg.expired.length > 0;
   const exit = failed ? 1 : 0;
 
   if (opts.json) {
@@ -2224,6 +2290,7 @@ export function run(argv, io = {}) {
           files: results.map((r) => ({ file: r.label, register: r.register, extractor: r.extractor, words: r.words, ignored: !!r.ignored, census: census(r.segs), hits: r.hits })),
           waivers: { expired: cfg.expired, unused },
           unreadable,
+          ...(jev ? { jev } : {}),
         },
         null,
         2,
@@ -2248,6 +2315,7 @@ export function run(argv, io = {}) {
   for (const w of cfg.expired)
     out(`${opts.github ? "::error::" : ""}humanize: waiver EXPIRED ${w.expires}: ${w.rule} ${w.path}${w.text ? ` "${w.text}"` : ""} (${w.reason}). Fix the text, or re-read it and renew the waiver.`);
   for (const w of unused) out(`humanize: waiver unused: ${w.rule} ${w.path}${w.text ? ` "${w.text}"` : ""}. Remove it.`);
+  if (jev) for (const l of jevRow(jev)) out(l);
   if (unreadable) out(`humanize: skipped ${plural(unreadable, "binary or oversized file")}`);
   const parts = [`${totals.block} block`, `${totals.warn} warn`];
   if (opts.all || opts.summary) parts.push(`${totals.info} info`);
@@ -2268,5 +2336,7 @@ if (invoked) {
     if (e.code !== "EPIPE") throw e;
     process.exit(process.exitCode ?? 0);
   });
-  process.exitCode = run(process.argv.slice(2));
+  const r = run(process.argv.slice(2));
+  if (r && typeof r.then === "function") r.then((c) => { process.exitCode = c; });
+  else process.exitCode = r;
 }

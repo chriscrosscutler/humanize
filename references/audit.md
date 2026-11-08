@@ -39,9 +39,18 @@ SCAN --git-log 50 --summary
 
 `--summary` gives per-file counts and the census; `--json` gives every hit with its line, tier, excerpt and fix, plus a `count` when the phrase repeats on its line. Keep the JSON in the scratchpad, never in the repo. Run `--git-log` on a whole-repo audit only, not when the user names paths. Triage in this order: block hits; warn hits on the high-traffic surfaces; census outliers (sentence spread under 0.3 on a long page, many dashes per 1,000 words).
 
+Then the Jev pass on the surfaces people read, never on legal text or git history:
+
+```
+SCAN --judge --json <surfaces…> > <scratchpad>/humanize-jev.json
+for f in <landing, store and release files>; do node ~/.claude/skills/humanize/scripts/guard.mjs evidence "$f" --root <repo> --jev-untrusted --json; done > <scratchpad>/evidence.jsonl
+```
+
+The JSON's `jev` object lists what was checked, the unsettled rows and what was not checked and why. `evidence` greps the repo's code and docs (never other copy) for each claim and asks Jev whether a snippet supports it. Its questions have not passed the stress run, so its rows are info: leads that §4 checks by hand. Both send the copy, and `evidence` also sends the matched snippets, to TypeSafe. Set `--jev-budget` from the word count: allow $0.002 per 1,000 words, or $0.01 with `--jev-untrusted`.
+
 ## 4. Judgment pass
 
-Read in full only the highest-traffic surfaces, in this order: landing hero and first screen, store subtitle and first three lines, onboarding, paywall, permission prompts, errors and empty states, transactional email, README intro. Check each against S23 to S31 and K1 to K6 in `patterns.md`. K2 means opening the code behind each claim: a claim with no code behind it is a finding, whatever its wording. Check claims in this order: everything above the fold; then prices and limits, platforms and versions, privacy, and numbers. Stop after about 20 claims, or once ten in a row hold up, and label the K2 rows a spot check.
+Read in full only the highest-traffic surfaces, in this order: landing hero and first screen, store subtitle and first three lines, onboarding, paywall, permission prompts, errors and empty states, transactional email, README intro. Check each against S23 to S32 and K1 to K10 in `patterns.md`, skipping the tells Jev settled for that file. K2 means opening the code behind each claim: start from `evidence`'s rows, and confirm each "supported" row by reading the snippet it cites. A claim with no code behind it is a finding, whatever its wording. Check claims in this order: everything above the fold; then prices and limits, platforms and versions, privacy, and numbers. Stop after about 20 claims, or once ten in a row hold up, and label the K2 rows a spot check.
 
 Do this inline. A repo with more than about 150K tokens of copy may justify a workflow under your global budget rules (disjoint lenses, at most 4 agents, every finder carrying evidence and a refutation attempt, no verify phase).
 
@@ -53,12 +62,13 @@ Write `docs/audits/humanize-<YYYY-MM-DD>.md` in the audited repo. Terse tables, 
 # humanize audit: <repo>, <date>
 
 Scanner: <n> block, <n> warn in <n> files (<n> words). Project config: <.humanize.json summary, or none>.
+Jev: <the scanner's jev row>. Tells per 1,000 words against human pre-2022 copy of the same register: <surface> <n> (human median <n>).
 Snapshot: <git sha>, plus the files that were dirty at scan time.
 
 | Surface | File:line | Id | Tier | Text | Fix |
 |---|---|---|---|---|---|
 
-Judgment (S23 to S31, K1 to K6):
+Judgment (S23 to S32, K1 to K10; Jev rows marked jev):
 | Surface | File:line | Id | Finding | Fix |
 |---|---|---|---|---|
 

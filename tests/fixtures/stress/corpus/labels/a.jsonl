@@ -1,0 +1,4 @@
+{"doc":"ai-sonnet/essay/01.md","register":"essay","group":"ai-sonnet","split":"held","labels":{"S24_meaning":["This marks a turning point for how the whole industry thinks about offline work and what it means for teams."]}}
+{"doc":"human/essay/01.md","register":"essay","group":"human","split":"held","labels":{"S24_meaning":[]}}
+{"doc":"human/essay/01.md","register":"essay","group":"human","split":"tune","labels":{}}
+{"pair":"guard/01","original":"guard/01/original.md","rewrite":"guard/01/rewrite.md","register":"landing","split":"held","changed":["Teams use it every day."],"dropped":["Export takes one click."]}

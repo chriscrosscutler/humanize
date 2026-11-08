@@ -1,0 +1,856 @@
+{
+  "$comment": [
+    "Questions humanize asks TypeSafe's Jev, and how code reads the answers. Jev judges, code decides.",
+    "Every probe is phrased so its answer is a plain yes or no about one thing. polarity 'present': yes means the tell is there. polarity 'absent': no means the tell is there (used where a shared, trusted wording asks the positive question).",
+    "A Noul at or above thresholds.yes is yes, at or below thresholds.no is no, anything between is unsettled and goes to Claude's hand read. A failed call is an error, never a no.",
+    "Every Choice is asked twice, options in document order and reversed, in the same request. If the two orders disagree on the top option, or the top leads the next by less than margin, the result is unsettled.",
+    "{id} in an instruction is filled by code with a sentence or line id (s4, l2). Names in backticks are keys of the state object.",
+    "A probe acts only when scripts/jev-trust.json marks its key trusted for the pinned model. Untrusted probes are listed as not checked so Claude reads those tells by hand.",
+    "Units: section (one heading's text, tagged s1..sN, at most section_max_tokens), opening (title plus the first two paragraphs), headline (headings of level 1-2, or the first line in store), lede (a level 1-2 heading plus the paragraph after it), lines (release notes and What's New, one list item or line each, tagged l1..lN), string (one UI string), names (S23 name pairs), email (the whole email, tagged s1..sN)."
+  ],
+  "version": 1,
+  "model": "jev-1.14.0",
+  "endpoint": "https://api.typesafe.ai/v1/systemone",
+  "usd_per_mtok": 0.042,
+  "thresholds": {
+    "yes": 0.7,
+    "no": 0.3
+  },
+  "margin": 0.15,
+  "locate_min": 0.15,
+  "locate_max": 3,
+  "trust": {
+    "min_cases": 20,
+    "min_each_side": 8,
+    "max_wrong": 0.05,
+    "min_settled": 0.6,
+    "min_recall": 0.67,
+    "max_false_positive": 0.05
+  },
+  "budget_usd": 0.05,
+  "section_max_tokens": 4000,
+  "chars_per_token": 4,
+  "never": [
+    "legal",
+    "commit",
+    "pr",
+    "comment",
+    "chat"
+  ],
+  "skip_blocks": [
+    "nav",
+    "header",
+    "footer"
+  ],
+  "tiers": {
+    "S23": {
+      "default": "warn"
+    },
+    "S24": {
+      "default": "warn"
+    },
+    "S25": {
+      "default": "warn"
+    },
+    "S26": {
+      "default": "warn"
+    },
+    "S27": {
+      "default": "warn"
+    },
+    "S28": {
+      "default": "warn",
+      "docs": "info"
+    },
+    "S29": {
+      "default": "warn"
+    },
+    "S30": {
+      "default": "warn"
+    },
+    "S31": {
+      "default": "warn"
+    },
+    "S32": {
+      "default": "warn"
+    },
+    "S8": {
+      "default": "warn"
+    },
+    "X2": {
+      "default": "warn"
+    },
+    "K1": {
+      "default": "warn"
+    },
+    "K2": {
+      "default": "warn"
+    },
+    "K3": {
+      "default": "warn"
+    },
+    "K4": {
+      "default": "warn"
+    },
+    "K5": {
+      "default": "warn"
+    },
+    "K7": {
+      "default": "warn"
+    },
+    "K8": {
+      "default": "warn"
+    },
+    "K9": {
+      "default": "warn"
+    },
+    "K10": {
+      "default": "warn"
+    }
+  },
+  "probes": {
+    "S24_meaning": {
+      "id": "S24",
+      "unit": "section",
+      "registers": [
+        "essay",
+        "prose",
+        "landing",
+        "store",
+        "email",
+        "social"
+      ],
+      "find": {
+        "instructions": "Does any sentence of `section` say what the facts before it mean, signal or reflect about something larger?",
+        "criteria": {
+          "true": "A sentence frames earlier facts as significant, such as 'a step toward a calmer library', 'a sign of how far the field has come' or 'This underscores the importance of good backups'.",
+          "false": "Every sentence states a fact, a step, an example, or an opinion with its reason."
+        }
+      },
+      "locate": {
+        "instructions": "Which sentence of `section` says what the facts before it mean, signal or reflect about something larger?"
+      },
+      "confirm": {
+        "instructions": "Does sentence {id} of `section` say what earlier facts mean, signal or reflect about something larger?",
+        "criteria": {
+          "true": "It frames earlier facts as significant: they mark, signal, reflect, underscore or represent something larger.",
+          "false": "It states a fact, a step, an example, or an opinion with its reason."
+        }
+      },
+      "unless": {
+        "instructions": "Does sentence {id} of `section` state something no earlier sentence of `section` states, such as a number, a name, a date or a concrete result?",
+        "criteria": {
+          "true": "It gives the reader information they did not have before this sentence.",
+          "false": "Its content is already in earlier sentences; it only frames them as meaningful."
+        }
+      },
+      "fix": "State the fact and stop; keep a meaning sentence only when it is news to the reader."
+    },
+    "S25_both_sides": {
+      "id": "S25",
+      "unit": "section",
+      "registers": [
+        "essay",
+        "prose",
+        "docs",
+        "email"
+      ],
+      "find": {
+        "instructions": "Does any sentence of `section` close a comparison by saying every option has merits or that the choice depends on the reader?",
+        "criteria": {
+          "true": "A sentence such as 'Both approaches have their place' or 'The right choice depends on your needs'.",
+          "false": "The section recommends one option, or compares nothing."
+        }
+      },
+      "locate": {
+        "instructions": "Which sentence of `section` says every option has merits or that the choice depends on the reader?"
+      },
+      "confirm": {
+        "instructions": "Does sentence {id} of `section` say every option has merits or that the choice depends on the reader?",
+        "criteria": {
+          "true": "It hands the decision back to the reader, such as 'Both have their merits' or 'It depends on your use case'.",
+          "false": "It recommends an option or states a fact."
+        }
+      },
+      "unless": {
+        "instructions": "Does sentence {id} of `section` name the condition that decides between the options, such as a team size, a budget, a file type or a platform?",
+        "criteria": {
+          "true": "It says when each option wins, such as 'Pick SQLite under 10 GB and Postgres above it'.",
+          "false": "It names no deciding condition, or only 'your needs', 'your goals' or 'your situation'."
+        }
+      },
+      "fix": "Recommend one and say when the other wins."
+    },
+    "S26_buried": {
+      "id": "S26",
+      "unit": "opening",
+      "registers": [
+        "essay",
+        "prose",
+        "docs",
+        "email",
+        "social"
+      ],
+      "ask": {
+        "instructions": "Does `opening` spend its first paragraph on background, context or scene-setting before stating its main point?",
+        "criteria": {
+          "true": "The first paragraph sets the scene, such as 'In today's world...', a history, a definition or why the topic matters, and the main point, answer or reason for writing comes later.",
+          "false": "The first paragraph states the main point, the answer, the news or the reason for writing; context follows it."
+        }
+      },
+      "fix": "Open with the answer, then the context a reader needs to trust it."
+    },
+    "S27_reversal": {
+      "id": "S27",
+      "unit": "section",
+      "registers": [
+        "essay",
+        "prose",
+        "landing",
+        "social",
+        "docs"
+      ],
+      "find": {
+        "instructions": "Does any sentence of `section` state a belief so that the next sentence can correct it?",
+        "criteria": {
+          "true": "A belief, then its correction, such as 'Most people think backups are enough. They aren't.' or 'You might assume more data helps. It doesn't.'",
+          "false": "The section states its findings directly."
+        }
+      },
+      "locate": {
+        "instructions": "Which sentence of `section` states a belief that the next sentence corrects?"
+      },
+      "confirm": {
+        "instructions": "Does sentence {id} of `section` state a belief that a later sentence of `section` corrects?",
+        "criteria": {
+          "true": "It sets up a belief or assumption so a later sentence can knock it down.",
+          "false": "It states a fact, a finding or the author's own view."
+        }
+      },
+      "unless": {
+        "instructions": "Would a typical reader of `title` already hold the belief in sentence {id} of `section`?",
+        "criteria": {
+          "true": "The belief is common among the people this text is for, so correcting it is news to them.",
+          "false": "The belief was set up only to be knocked down; few readers of this text hold it."
+        }
+      },
+      "fix": "State the finding."
+    },
+    "S28_orbit": {
+      "id": "S28",
+      "unit": "section",
+      "registers": [
+        "essay",
+        "prose",
+        "landing",
+        "docs",
+        "email"
+      ],
+      "filter": {
+        "min_words": 25
+      },
+      "find": {
+        "instructions": "Does any sentence of `section` open with clauses that circle the topic before reaching its point?",
+        "criteria": {
+          "true": "A sentence spends its first half on framing, such as 'When it comes to large libraries, and especially when duplicates pile up, what matters most is speed'.",
+          "false": "Each sentence states its point in its main clause, early."
+        }
+      },
+      "locate": {
+        "instructions": "Which sentence of `section` opens with clauses that circle the topic before reaching its point?"
+      },
+      "confirm": {
+        "instructions": "Does sentence {id} of `section` spend its opening clauses circling the topic before stating its point?",
+        "criteria": {
+          "true": "Its point arrives at the end, after framing clauses such as 'When it comes to', 'In the world of' or 'and especially when'.",
+          "false": "Its subject and point come early; any clause before them adds a needed condition."
+        }
+      },
+      "fix": "Lead with the point: 'Speed matters most for large libraries.'"
+    },
+    "S30_echo": {
+      "id": "S30",
+      "unit": "lede",
+      "registers": [
+        "docs",
+        "essay",
+        "prose"
+      ],
+      "ask": {
+        "instructions": "Does `first_sentence` only introduce the topic that `heading` names?",
+        "criteria": {
+          "true": "It announces or restates the heading's topic, such as the heading 'Consequences' followed by 'The loss of local newspapers has consequences for communities', or 'Exporting' followed by 'Exporting lets you save your library as a file'.",
+          "false": "It opens with a step, a condition, a number or a specific fact the heading did not give."
+        }
+      },
+      "unless": {
+        "instructions": "Does `first_sentence` define the term in `heading` for a reader who may not know it?",
+        "criteria": {
+          "true": "The section is a definition, such as 'A webhook is an HTTP request your server receives when an event happens'.",
+          "false": "It restates the heading without defining anything."
+        }
+      },
+      "fix": "Open with what the heading didn't say: 'Choose File > Export, then a folder.'"
+    },
+    "S31_restate": {
+      "id": "S31",
+      "unit": "section",
+      "registers": [
+        "essay",
+        "prose",
+        "docs",
+        "landing",
+        "email"
+      ],
+      "find": {
+        "instructions": "Does any sentence of `section` repeat, in different words, a point an earlier sentence of `section` already made?",
+        "criteria": {
+          "true": "A later sentence restates an earlier one, such as 'Exports run overnight.' followed later by 'The export happens while you sleep.'",
+          "false": "Each sentence adds a point the earlier ones did not make."
+        }
+      },
+      "locate": {
+        "instructions": "Which sentence of `section` repeats, in different words, a point an earlier sentence already made?"
+      },
+      "confirm": {
+        "instructions": "Does sentence {id} of `section` repeat, in different words, a point an earlier sentence of `section` already made?",
+        "criteria": {
+          "true": "Its point is already in an earlier sentence; only the wording changed.",
+          "false": "It adds a fact, a step, a reason or an example the earlier sentences did not give."
+        }
+      },
+      "fix": "Cut to what is new for the reader."
+    },
+    "S31_known": {
+      "id": "S31",
+      "unit": "section",
+      "registers": [
+        "essay",
+        "prose",
+        "docs",
+        "landing",
+        "email"
+      ],
+      "find": {
+        "instructions": "Does any sentence of `section` tell the reader something it says they already know?",
+        "criteria": {
+          "true": "A sentence such as 'As a developer, you know bugs are costly' or 'We all know how stressful moving can be'.",
+          "false": "No sentence explains what the reader is said to know already."
+        }
+      },
+      "locate": {
+        "instructions": "Which sentence of `section` tells the reader something it says they already know?"
+      },
+      "confirm": {
+        "instructions": "Does sentence {id} of `section` tell the reader something it says they already know?",
+        "criteria": {
+          "true": "It opens with or leans on 'as you know', 'we all know', 'as a developer, you know' or the like.",
+          "false": "It tells the reader something new."
+        }
+      },
+      "fix": "Cut it; start with what is new for that reader."
+    },
+    "S32_kicker": {
+      "id": "S32",
+      "unit": "lede",
+      "registers": [
+        "landing",
+        "store",
+        "social"
+      ],
+      "ask": {
+        "instructions": "Does `first_sentence` reassure the reader about a worry `heading` never raised?",
+        "criteria": {
+          "true": "It answers an unspoken fear, such as 'You sign off on every change.', 'No surprises.' or 'Zero risk.' under a headline that raised no risk.",
+          "false": "It explains, extends or proves the headline, or answers a concern the headline itself raised."
+        }
+      },
+      "unless": {
+        "instructions": "Does `first_sentence` add a new fact, such as a price, a platform or a number?",
+        "criteria": {
+          "true": "It gives the reader a checkable fact, such as 'Free on iPhone and Mac' or '$9 a month'.",
+          "false": "It gives no new checkable fact."
+        }
+      },
+      "fix": "Let the claim stand alone, or swap the kicker for the mechanism that earns the trust: 'Nothing moves until you press Apply.'"
+    },
+    "S8_withheld": {
+      "id": "S8",
+      "unit": "opening",
+      "registers": [
+        "social"
+      ],
+      "ask": {
+        "instructions": "Does the first line of `opening` hold back its point to make the reader keep going?",
+        "criteria": {
+          "true": "A teaser such as 'You won't believe what happened next', 'Here's what nobody tells you about pricing' or 'I made a mistake. Here's what I learned:'.",
+          "false": "The first line states the point, the news or the specific thing."
+        }
+      },
+      "fix": "Put the specific thing first."
+    },
+    "S23_names": {
+      "id": "S23",
+      "unit": "names",
+      "registers": [
+        "essay",
+        "prose",
+        "landing",
+        "store",
+        "docs",
+        "email"
+      ],
+      "candidates": [
+        "app",
+        "application",
+        "platform",
+        "tool",
+        "solution",
+        "product",
+        "service",
+        "system",
+        "software",
+        "suite",
+        "engine",
+        "assistant",
+        "dashboard",
+        "workspace",
+        "hub"
+      ],
+      "min_names": 3,
+      "ask": {
+        "instructions": "Do `name_a` and `name_b` refer to the same thing in `text`?",
+        "criteria": {
+          "true": "Both names point at one thing, such as 'the app' and 'the platform' both meaning the product being described.",
+          "false": "They name two different things, such as 'the app' on the phone and 'the dashboard' on the web."
+        }
+      },
+      "fix": "Pick one name and repeat it; readers take a new word for a new thing."
+    },
+    "K1_unmeasured": {
+      "id": "K1",
+      "unit": "section",
+      "registers": [
+        "landing",
+        "store",
+        "release",
+        "email",
+        "social"
+      ],
+      "code_leave": "has_number",
+      "find": {
+        "instructions": "Does any sentence of `section` praise the product with a quality word, such as fast, easy, simple, powerful, beautiful, intuitive or better?",
+        "criteria": {
+          "true": "A sentence claims a quality or an improvement of the product, such as 'Much faster imports', 'a beautiful and intuitive interface' or 'simple, friendly and designed to fit your life'.",
+          "false": "Every sentence says what the product does, a step or a fact, such as 'Exports to CSV' or 'Reminds you at 8 am'."
+        }
+      },
+      "locate": {
+        "instructions": "Which sentence of `section` praises the product with a quality word, such as fast, easy, simple, powerful, beautiful, intuitive or better?"
+      },
+      "confirm": {
+        "instructions": "Does sentence {id} of `section` praise the product with a quality word, such as fast, easy, simple, powerful, beautiful, intuitive or better?",
+        "criteria": {
+          "true": "It claims a quality or an improvement of the product, such as 'a beautiful and intuitive interface' or 'faster, simpler and more powerful'.",
+          "false": "It says what the product does, a step or a fact, without praising it."
+        }
+      },
+      "unless": {
+        "instructions": "Could a reader check the claim in sentence {id} of `section` at a glance, such as 'Works on iPhone and Mac' or 'Free to download'?",
+        "criteria": {
+          "true": "A reader can verify it on sight, with no measurement.",
+          "false": "Checking it would need a measurement or a comparison."
+        }
+      },
+      "fix": "Give the measured number, or ask the author for one, or cut the claim."
+    },
+    "K3_proof": {
+      "id": "K3",
+      "unit": "section",
+      "registers": [
+        "landing",
+        "store",
+        "email",
+        "social"
+      ],
+      "code_leave": "count_and_date",
+      "find": {
+        "instructions": "Does any sentence of `section` claim that many people use, love or trust the product?",
+        "criteria": {
+          "true": "A sentence such as 'Loved by photographers everywhere', 'Trusted by thousands of teams' or 'Join the community'.",
+          "false": "No sentence claims a crowd of users or fans."
+        }
+      },
+      "locate": {
+        "instructions": "Which sentence of `section` claims that many people use, love or trust the product?"
+      },
+      "confirm": {
+        "instructions": "Does sentence {id} of `section` claim that many people use, love or trust the product?",
+        "criteria": {
+          "true": "It claims popularity, adoption or approval by a crowd.",
+          "false": "It describes the product or one named customer."
+        }
+      },
+      "fix": "Cut it until there is a real count, a source and a date."
+    },
+    "K4_superlative": {
+      "id": "K4",
+      "unit": "section",
+      "registers": [
+        "landing",
+        "store",
+        "email",
+        "social",
+        "release"
+      ],
+      "find": {
+        "instructions": "Does any sentence of `section` rank the product above all others, with a word such as best, easiest, fastest, most, leading, top, #1 or only?",
+        "criteria": {
+          "true": "A sentence such as 'The best way to organize photos', 'the easiest way to keep your plants alive', 'a leading platform for teams' or 'The only planner you will ever need'.",
+          "false": "No sentence ranks the product above other products."
+        }
+      },
+      "locate": {
+        "instructions": "Which sentence of `section` ranks the product above all others, with a word such as best, easiest, fastest, most, leading, top, #1 or only?"
+      },
+      "confirm": {
+        "instructions": "Does sentence {id} of `section` rank the product above all others?",
+        "criteria": {
+          "true": "It calls the product the best, easiest, fastest, most, leading, top, #1, only or first of its kind, directly or as 'the easiest way to...'.",
+          "false": "It describes the product without ranking it above other products."
+        }
+      },
+      "unless": {
+        "instructions": "Does sentence {id} of `section` give the evidence for its ranking, such as a test, a comparison or a named source?",
+        "criteria": {
+          "true": "It says what was compared or who found it, such as 'the only one of the five sorters we tested that reads RAW sidecar files'.",
+          "false": "It gives no test, comparison or source."
+        }
+      },
+      "fix": "Name the advantage and the evidence for it."
+    },
+    "K5_urgency": {
+      "id": "K5",
+      "unit": "section",
+      "registers": [
+        "landing",
+        "store",
+        "email",
+        "social"
+      ],
+      "code_leave": "has_date",
+      "find": {
+        "instructions": "Does any sentence of `section` push the reader to act now?",
+        "criteria": {
+          "true": "A sentence such as 'Only 3 spots left', 'Price goes up tonight' or 'Don't miss out'.",
+          "false": "No sentence presses the reader to hurry."
+        }
+      },
+      "locate": {
+        "instructions": "Which sentence of `section` pushes the reader to act now?"
+      },
+      "confirm": {
+        "instructions": "Does sentence {id} of `section` push the reader to act now?",
+        "criteria": {
+          "true": "It creates time pressure or scarcity.",
+          "false": "It invites the reader with no time pressure."
+        }
+      },
+      "fix": "Cut it. A real deadline keeps its date."
+    },
+    "K7_generic": {
+      "id": "K7",
+      "unit": "headline",
+      "registers": [
+        "landing",
+        "store"
+      ],
+      "polarity": "absent",
+      "gate": {
+        "instructions": "Is `headline` a headline or slogan that says something about the product or the reader?",
+        "criteria": {
+          "true": "It makes a statement or promise, such as 'Schedule a week of Reels from one recording' or 'Build the future of work'.",
+          "false": "It is a label that names a section, a plan, a menu or a column, such as 'Pricing', 'Starter', 'Questions' or 'Legal'."
+        },
+        "shared": "bespoke:headline_is_claim"
+      },
+      "ask": {
+        "instructions": "Does `headline` name something specific to one product, such as a feature, a number, an audience or a result?",
+        "criteria": {
+          "true": "It says what this product does or who it is for, such as 'Schedule a week of Reels from one recording'.",
+          "false": "It could sit unchanged on another company's site, such as 'Build the future of work' or 'Your all-in-one platform'."
+        },
+        "shared": "bespoke:headline_specific"
+      },
+      "fix": "Say what this product does or who it is for."
+    },
+    "K8_error": {
+      "id": "K8",
+      "unit": "string",
+      "registers": [
+        "ui"
+      ],
+      "polarity": "absent",
+      "combine": "any",
+      "gate": {
+        "instructions": "Is `message` telling the person that something they tried did not work?",
+        "criteria": {
+          "true": "It reports a failure, a rejection or a problem with what the person did or asked for, such as 'Upload failed' or 'The file is over 50 MB'.",
+          "false": "It is ordinary copy that happens to use a word like 'couldn't' or 'error', such as a caption, a joke or a feature description."
+        },
+        "shared": "bespoke:is_error"
+      },
+      "asks": {
+        "cause": {
+          "instructions": "Does `message` say what went wrong?",
+          "criteria": {
+            "true": "It names the cause, such as 'The file is over 50 MB' or 'Instagram rejected the caption because it has 31 hashtags'.",
+            "false": "It says only that something failed, such as 'Something went wrong' or 'Error'."
+          },
+          "shared": "bespoke:error_cause"
+        },
+        "next": {
+          "instructions": "Does `message` tell the person what they can do next?",
+          "criteria": {
+            "true": "It gives a step, such as 'Pick a file under 50 MB' or 'Reconnect Instagram in Settings'.",
+            "false": "It gives no step, or only 'please try again later' with no reason to expect a different result."
+          },
+          "shared": "bespoke:error_next"
+        }
+      },
+      "fix": "Say what failed, why if known, and what to do next."
+    },
+    "K9_asks": {
+      "id": "K9",
+      "unit": "email",
+      "registers": [
+        "email"
+      ],
+      "min_count": 2,
+      "per_sentence": {
+        "instructions": "Does sentence {id} of `email` ask the reader to do something?",
+        "criteria": {
+          "true": "It requests an action or a reply, such as 'Could you review the draft by Friday?' or 'Send me the logo when you can'.",
+          "false": "It informs, thanks, greets or signs off without asking for anything."
+        }
+      },
+      "fix": "One ask, with a date or an owner; move the rest to a list or a second email."
+    },
+    "K10_store_opening": {
+      "id": "K10",
+      "unit": "opening",
+      "registers": [
+        "store"
+      ],
+      "polarity": "absent",
+      "ask": {
+        "instructions": "Do the first lines of `opening` say what the app does?",
+        "criteria": {
+          "true": "They name the main use, such as 'Find and delete duplicate photos on your iPhone' or 'Track your baby's feeds and naps'.",
+          "false": "They open on a slogan, a mood or a question, such as 'Your memories deserve better' or 'Tired of clutter?'."
+        }
+      },
+      "fix": "Put the main use first: only those lines show before 'more'."
+    },
+    "X2_change": {
+      "id": "X2",
+      "unit": "lines",
+      "registers": [
+        "release",
+        "store"
+      ],
+      "polarity": "absent",
+      "skip_if_regex_hit": "X2",
+      "per_line": {
+        "instructions": "Does line {id} of `notes` name what changed for the user?",
+        "criteria": {
+          "true": "It names the screen, the bug, the file type or the new behavior, such as 'Fixes a crash when importing HEIC files from an SD card'.",
+          "false": "It could describe any release, such as 'Improvements to the experience' or 'Various fixes and updates'."
+        }
+      },
+      "fix": "Name what changed for the reader: the bug, the screen, the new behavior."
+    }
+  },
+  "code": {
+    "S29": {
+      "unit": "document",
+      "registers": [
+        "essay",
+        "docs",
+        "landing",
+        "prose"
+      ],
+      "min_sections": 4,
+      "same_share": 0.75,
+      "skeleton": "per section: intro paragraph count, bullet count bucketed 0 / 1-2 / 3 / 4+, ends in bold or a takeaway line",
+      "fix": "Let each section's length follow its content and merge the thin ones."
+    },
+    "P6": {
+      "leave": "summary_heading",
+      "pattern": "^(summary|tl;?dr|overview|at a glance|key (points|takeaways))\\b"
+    }
+  },
+  "leave": {
+    "$comment": "Asked only for warn hits of kind tell. A yes drops the hit to info with note 'jev: <reason>'. State: sentence, match, and previous for C1.",
+    "W1": {
+      "instructions": "Is `match` used in its literal sense in `sentence`?",
+      "criteria": {
+        "true": "The word names a real thing, such as a woven tapestry, a Kerberos realm or an intricate mechanism being described part by part.",
+        "false": "The word decorates the prose, such as 'delve into the data', 'a rich tapestry of features' or 'the realm of productivity'."
+      },
+      "reason": "literal use"
+    },
+    "W2": {
+      "instructions": "Is `match` used literally in `sentence`, or inside a quoted review that names its source?",
+      "criteria": {
+        "true": "It describes a measurable property, such as 'a powerful magnet' or 'a sleek aluminum case', or it sits in a quote attributed to a named reviewer.",
+        "false": "It praises the product or an idea without saying how, such as 'a game-changing way to sort photos' or 'an intuitive interface'."
+      },
+      "reason": "literal use or sourced quote"
+    },
+    "W5": {
+      "instructions": "Is `match` used in a finance or legal sense in `sentence`?",
+      "criteria": {
+        "true": "It is a term of art, such as leverage on a loan, a fund's leverage ratio, or 'adhere' in a contract clause.",
+        "false": "It stands in for a plain verb, such as 'utilize the menu', 'leverage our tools' or 'facilitate collaboration'."
+      },
+      "reason": "finance or legal term"
+    },
+    "S15": {
+      "instructions": "Does `sentence` list three items because the subject really has those three members?",
+      "criteria": {
+        "true": "The three items are a complete, real set, such as three supported file formats, three named plans or three steps that all happen.",
+        "false": "The three are padding or near-synonyms, such as 'fast, simple and secure' or 'plan, create and grow'."
+      },
+      "reason": "a real three-member list"
+    },
+    "H3": {
+      "instructions": "Is `sentence` legal or medical text that has to hedge?",
+      "criteria": {
+        "true": "It is a dosage warning, a side-effect notice, a liability clause or similar text where a firm claim would be wrong.",
+        "false": "It hedges an ordinary claim about a product, a result or an idea."
+      },
+      "reason": "legal or medical hedge"
+    },
+    "P4": {
+      "instructions": "Is `sentence` a legal notice that must use a fixed form?",
+      "criteria": {
+        "true": "It is a required disclosure or notice whose wording is set by law or a contract.",
+        "false": "It is ordinary prose that clears its throat before the point."
+      },
+      "reason": "fixed-form legal notice"
+    },
+    "S9": {
+      "instructions": "Does `sentence` name the source of its claim?",
+      "criteria": {
+        "true": "It names a person, an organization, a study or a publication, such as 'A 2023 Pew survey found...'.",
+        "false": "It cites 'experts', 'studies', 'research' or 'many people' without naming them."
+      },
+      "reason": "named source"
+    },
+    "C1": {
+      "instructions": "Does `sentence` answer a direct yes-or-no question asked in `previous`?",
+      "criteria": {
+        "true": "`previous` asks a yes-or-no question and `sentence` opens by answering it, such as 'Sure' after 'Can you send the file?'.",
+        "false": "Nothing asked a yes-or-no question; the opener is filler."
+      },
+      "reason": "answers a yes-or-no question"
+    }
+  },
+  "register": {
+    "skip_if": "\\b(herein|hereby|shall not|terms of (service|use)|privacy policy|end user license|indemnif|governing law|limitation of liability)\\b",
+    "choice": {
+      "instructions": "Where will `text` be published or sent?",
+      "criteria": {
+        "prose": "General text with no clear destination.",
+        "chat": "A message to a person: a Slack message, a DM, a forum or support reply.",
+        "email": "A product or outreach email with a greeting, an ask or a sign-off.",
+        "docs": "A README, guide or reference page that explains how something works or how to do something.",
+        "essay": "A blog post, article or opinion piece meant to be read start to finish.",
+        "landing": "A marketing page that pitches a product, with headlines and calls to action.",
+        "store": "An App Store or Play Store listing: a subtitle, promotional text or description.",
+        "ui": "Short in-app strings: buttons, labels, alerts, errors or empty states.",
+        "release": "Release notes, a changelog or What's New text listing changes.",
+        "commit": "A git commit message.",
+        "pr": "A pull request title or description.",
+        "comment": "A code comment or docstring.",
+        "social": "A post for X, LinkedIn, Bluesky or Threads.",
+        "legal": "A privacy policy, terms, an EULA or consent text."
+      }
+    },
+    "sells": {
+      "instructions": "Does `text` sell a product or ask the reader to buy, download or sign up?",
+      "criteria": {
+        "true": "It pitches a product or service, or ends in a call to action such as 'Start free' or 'Download now'.",
+        "false": "It informs, explains or argues without asking the reader to buy or sign up."
+      }
+    }
+  },
+  "guard": {
+    "$comment": "Citation check. Code first exact-matches every number, URL, quote, code span and capitalized name in the rewrite against the original; a literal missing from the original is a K6 block with no Jev call. Sentences unchanged from the original (after whitespace and case folding) are skipped. Then source picks the original sentences behind each rewrite sentence (both orders, top locate_max at locate_min or above), and supports reads them.",
+    "tiers": {
+      "added": "block",
+      "changed": "block",
+      "dropped": "warn"
+    },
+    "source": {
+      "instructions": "Which sentence of `original` is the source of the claim in sentence {id} of `rewrite`?"
+    },
+    "supports": {
+      "instructions": "Do the sentences in `source` state or directly imply every fact in `sentence`?",
+      "criteria": {
+        "true": "Every number, name, limit, capability, comparison, quote, date and event in `sentence` appears in or follows from `source`.",
+        "false": "`sentence` adds or changes a fact, such as a number, a name, a limit, a capability, a comparison, a quote, a date or an event that `source` does not have."
+      }
+    },
+    "dropped": {
+      "instructions": "Does `sentence` make a point that `rewrite` leaves out?",
+      "criteria": {
+        "true": "`sentence` states a fact, a step, a limit, a warning or a reason that no part of `rewrite` states.",
+        "false": "`rewrite` states the same point, or `sentence` is filler: it repeats an earlier sentence, talks like a chatbot, or praises without a fact."
+      }
+    }
+  },
+  "evidence": {
+    "$comment": "K2. Code picks claim sentences with is_claim, greps the project's source and docs for snippets that share the claim's terms (at most 10 snippets of at most 20 lines, tagged c1..cN), then asks pick in both orders and supports on the top picks. No snippet, or supports no on every pick, is a K2 warn: 'no source found, verify'. Snippets of the project's code are sent to TypeSafe; the README says so.",
+    "registers": [
+      "landing",
+      "store",
+      "release"
+    ],
+    "is_claim": {
+      "instructions": "Does sentence {id} of `section` promise a capability, a limit or a guarantee of the product?",
+      "criteria": {
+        "true": "It says what the product does, keeps, never does or works with, such as 'Works offline', 'End-to-end encrypted' or 'Never uploads your photos'.",
+        "false": "It is a heading, an instruction, a price or a call to action with no claim about how the product behaves."
+      }
+    },
+    "pick": {
+      "instructions": "Which snippet in `snippets` is the code or documentation behind the claim in `claim`?"
+    },
+    "supports": {
+      "instructions": "Does snippet {id} of `snippets` show that the product does what `claim` says?",
+      "criteria": {
+        "true": "The snippet implements or documents the behavior the claim promises, such as an offline cache for 'works offline'.",
+        "false": "The snippet is about something else, or shows the product does less than the claim says."
+      }
+    }
+  },
+  "pick": {
+    "$comment": "Polish. Only versions that pass the unit's probes and the guard are offered. Asked in both orders; a split goes to Claude.",
+    "clearest": {
+      "instructions": "Which version in `versions` would `audience` understand fastest?"
+    },
+    "audiences": {
+      "landing": "a first-time visitor deciding whether to try the product",
+      "store": "someone scrolling the App Store who sees only the first lines",
+      "release": "a user deciding whether to update",
+      "docs": "a developer trying to get one task done",
+      "essay": "a reader deciding whether to keep reading",
+      "email": "a busy recipient reading on a phone",
+      "social": "someone scrolling a feed",
+      "ui": "a person in the middle of a task",
+      "prose": "a general reader"
+    }
+  }
+}

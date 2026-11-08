@@ -121,3 +121,56 @@ Limits:
 - The corpus is reference documentation, not marketing, email or chat. The landing, store, email and social tiers rest on the cited studies.
 - ASCII rendering turns em dashes into "--", so F1 and F2 are not calibrated here. F2's threshold comes from Freeburg.
 - Code the conversions left unmarked, such as perl's `->` and vim's `:w!`, inflates F3 and F13.
+
+## Jev stress run
+
+Run on 2026-11-07 with jev-1.14.0. `node evals/jev/stress.mjs --split held --write-trust` writes `scripts/jev-trust.json` and `evals/jev/report.md`. `evals/jev/manifest.jsonl` lists every document by id, URL or brief; the text itself stays out of the repo.
+
+Corpus:
+- AI drafts: 41 by Claude Sonnet and 41 by Claude Haiku from one-line briefs (essay, docs, landing, store, release), kept only when they scanned with zero block hits; 18 essays, docs and landing pages by other models (DeepSeek, GPT-4, Gemini, Mixtral, Mistral, Qwen, Kimi, Yi) from public Hugging Face datasets.
+- Human copy: 90 pages from before 2022-11-30 fetched from the Wayback Machine (essay 17, docs 20, landing 18, store 17, release 18). Ten more were dropped as broken extractions or not English.
+- Synthetic cases: 24 per check for 12 checks that the drafts rarely trip (288), half with the tell and half without, and 20 rewrite pairs for the fact guard.
+- Labels: Claude Sonnet read each document for each check, without Jev's answers.
+
+A document is a tuning case when the first byte of the SHA-1 of its id is divisible by 5, and held out otherwise. Question wording was tuned on the tuning cases only. Trust comes from the 391 held-out documents. The bar: at least 20 cases with 8 on each side, at least 60% settled, at most 5% wrong among the settled answers, recall of at least 0.67 and false positives on at most 5% of clean cases.
+
+| Check | With / without | Recall | False positives | Settled | Wrong | Acts |
+|---|---|---|---|---|---|---|
+| register | 377 docs | 0.93 | | 0.97 | 0.04 | yes |
+| K3 crowd claim | 11 / 537 | 1 | 0.04 | 0.99 | 0.04 | yes |
+| K5 deadline | 9 / 539 | 0.89 | 0.01 | 0.98 | 0.01 | yes |
+| K8 error without cause or next step | 11 / 11 | 1 | 0 | 1 | 0 | yes |
+| K10 store opening | 8 / 66 | 1 | 0.02 | 0.96 | 0.01 | yes |
+| S25 declines to pick | 10 / 522 | 1 | 0 | 0.99 | 0 | yes |
+| S27 corrects a belief | 11 / 993 | 0.64 | 0.01 | 0.98 | 0.02 | no |
+| X2 change line | 8 / 367 | 0.63 | 0.10 | 0.92 | 0.11 | no |
+| S8 withheld payoff | 11 / 9 | 0.73 | 0 | 1 | 0.15 | no |
+| K9 several asks | 10 / 8 | 1 | 0.25 | 0.94 | 0.12 | no |
+| K1 unmeasured quality | 36 / 575 | 0.47 | 0.17 | 0.88 | 0.21 | no |
+| S30 first sentence echoes heading | 13 / 303 | 0.46 | 0.06 | 0.68 | 0.10 | no |
+| S31 says what the reader knows | 11 / 973 | 0.45 | 0 | 0.99 | 0.01 | no |
+| K4 superlative | 17 / 594 | 0.35 | 0.01 | 0.99 | 0.02 | no |
+| S24 says what facts mean | 9 / 684 | 0.33 | 0.01 | 0.86 | 0.02 | no |
+| S23 several names for one thing | 10 / 289 | 0 | 0 | 0.99 | 0.03 | no |
+| Leave filter, S15 | 138 / 32 | 0.61 | 0.19 | 0.63 | 0.17 | no |
+
+The other checks (K7, S26, S28, S32, the other Leave questions and the fact guard's two questions) had fewer than 8 held-out cases on one side. A check that does not act still runs with `--jev-untrusted`, as info; without it Claude reads that tell by hand. Most K1, K4 and K7 misses were label calls: one sentence filed under K1 by the label and K4 by Jev, or a section heading such as "Simple, transparent pricing" read as generic by one and as a label by the other.
+
+Tells per 1,000 words, median per held-out document:
+
+| Register | Human, regex | AI, regex | Human, every Jev check | AI, every Jev check |
+|---|---|---|---|---|
+| essay | 6.41 | 8.42 | 2.70 | 3.17 |
+| docs | 2.03 | 0 | 1.37 | 0 |
+| landing | 14.13 | 15.67 | 14.59 | 15.33 |
+| store | 5.41 | 15.63 | 6.10 | 3.45 |
+| release | 12.24 | 0 | 5.28 | 10.52 |
+
+At the median, neither count separates a human page from a current draft that already scans free of block hits, and the trusted checks alone fire on almost nothing on either side (median 0). The count says how much there is to fix, never who wrote the text.
+
+Cost, measured on five drafts with an empty cache: $0.0002 to $0.0013 per 1,000 words with the trusted checks, and $0.0019 to $0.0069 with `--jev-untrusted`.
+
+Limits:
+- Store and release AI drafts come from Claude models only.
+- Positives for K8, K9, K10, S8, S23, S25 and S27 are synthetic; their clean cases include the real drafts and pages. Email, social and ui text appears only in synthetic cases.
+- One model wrote the labels. Rerun the stress run after any wording change, and on each new Jev model.

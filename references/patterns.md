@@ -28,6 +28,10 @@ Read the whole text once for these after the scanner is clean.
 **K4 Unearned superlative (judgment).** "The best way to organize photos" → name the advantage and the evidence for it ("the only one of the five sorters we tested that reads RAW sidecar files").
 **K5 Manufactured urgency (judgment).** "Only 3 spots left", "price goes up tonight" when nothing ends → cut it. A real deadline keeps its date.
 **K6 Fabricated specifics (judgment).** The rewrite adds numbers, names, quotes, dates or anecdotes the source never had, to sound concrete → remove them and ask the author for the real figure. This is the humanizer's own failure mode; check for it on every pass.
+**K7 Generic headline (judgment).** "Your all-in-one platform" or "Build the future of work" could sit unchanged on another company's site → say what this product does or who it is for: "Schedule a week of Reels from one recording." Leave: section labels ("Pricing", "Starter"), and a brand name standing alone as a page title.
+**K8 Error with no cause or next step (judgment).** "Upload failed. Please try again later." → "The file is over 50 MB. Pick a smaller one, or trim the video first." Say what failed, why if known, and what the person can do. Leave: a cause the app can't know, said plainly with the one step that helps ("Instagram didn't answer. Check your connection, then tap Retry.").
+**K9 Scattered asks (judgment).** An email that asks for three things in three paragraphs ("Could you review the draft? … Also, can you send the logo? … Let me know your availability.") → one ask, with a date or an owner; put the rest in a numbered list or a second email. Leave: a numbered list of steps the reader takes in order.
+**K10 Store opening misses the use (judgment).** An App Store description that opens on a slogan or a mood ("Your memories deserve better.") → put the main use in the first lines, the only ones shown before "more": "Find and delete duplicate photos on your iPhone." Leave: a game, whose first lines can set the scene the player is buying.
 
 ## Not tells on their own
 

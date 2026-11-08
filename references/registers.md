@@ -26,6 +26,23 @@ A hit's tier is the rule's entry for that register, else the rule's default; the
 
 The scanner does not read `Info.plist` purpose strings, Astro `{…}` expressions or text built at runtime. Read those by hand during an audit.
 
+## Jev checks per register
+
+With `--judge`, these judgment checks go to Jev (`scripts/judge.json`). A check marked * passed the held-out stress run and acts; the rest show as info only with `--jev-untrusted`, and Claude reads those tells by hand. Legal, commit, PR, comment and chat text is never sent.
+
+| Register | Checks |
+|---|---|
+| landing | K3\*, K5\*, K1, K4, K7, S23, S24, S27, S28, S31, S32 |
+| store | K3\*, K5\*, K10\*, K1, K4, K7, X2, S23, S24, S32 |
+| essay, prose | S25\*, S23, S24, S26, S27, S28, S30, S31 |
+| docs | S25\*, S23, S26, S27, S28, S30, S31 |
+| email | K3\*, K5\*, S25\*, K1, K4, K9, S23, S24, S26, S28, S31 |
+| social | K3\*, K5\*, K1, K4, S8, S24, S26, S27, S32 |
+| release | K1, K4, X2 |
+| ui | K8\* |
+
+Store text laid out as fields ("Name:", "Subtitle:", "Promotional text:", "Description:", "What's New:") is read field by field. K7 asks about the subtitle, K10 about the first two paragraphs of the description, and X2 about the What's New lines only. The name and keyword fields are never judged as prose.
+
 ## prose
 
 The default for pasted text and unmatched paths. Chatbot residue (C1 to C3, C5 to C8, C10, C12), the stock phrases P1, P2 and P7, "No X. No Y. Just Z." (S4), staged reveals (S8), emoji bullets (F8) and invisible characters (F15) block; most other rules warn. P4 and P5 warn here because human tutorials and man pages use them ("It should be noted that", "Let's take a look"; `sources.md`, Calibration). When you know where the text is going, pass `--register` so the right rules apply.

@@ -76,3 +76,26 @@ test("the plugin, marketplace, hook and package manifests agree", () => {
   assert.match(action, /\$GITHUB_ACTION_PATH\/scripts\/scan\.mjs/);
   assert.match(action, /--github/);
 });
+
+// ── the Jev judgment pass (scripts/judge.json) ──────────────────────────────
+
+const judgeJson = JSON.parse(readFileSync(join(ROOT, "scripts/judge.json"), "utf8"));
+
+test("every judge.json probe id has a catalog entry", () => {
+  const ids = new Set(entries.map((e) => e.id));
+  for (const [key, p] of Object.entries(judgeJson.probes)) assert.ok(ids.has(p.id), `${key}: ${p.id} has no entry in patterns.md`);
+});
+
+test("every judgment entry is covered by a probe, judge.code, K6 (judge.guard) or K2 (judge.evidence)", () => {
+  const covered = new Set([
+    ...Object.values(judgeJson.probes).map((p) => p.id),
+    ...Object.keys(judgeJson.code ?? {}),
+    ...(judgeJson.guard ? ["K6"] : []),
+    ...(judgeJson.evidence ? ["K2"] : []),
+  ]);
+  for (const e of entries.filter((x) => x.judgment)) assert.ok(covered.has(e.id), `${e.id} (judgment) has no probe, code check, guard or evidence entry in judge.json`);
+});
+
+test("every judge.leave key is a rule id in rules.json", () => {
+  for (const id of Object.keys(judgeJson.leave).filter((k) => k !== "$comment")) assert.ok(byId.has(id), `judge.leave.${id} is not a rule id`);
+});

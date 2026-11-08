@@ -1,0 +1,459 @@
+{
+  "model": "jev-1.14.0",
+  "measured": "2026-11-07",
+  "split": "held",
+  "probes": {
+    "K10_store_opening": {
+      "trusted": true,
+      "cases": 74,
+      "pos": 8,
+      "neg": 66,
+      "settled": 71,
+      "wrong": 1,
+      "recall": 1,
+      "fp": 0.02
+    },
+    "K1_unmeasured": {
+      "trusted": false,
+      "cases": 611,
+      "pos": 36,
+      "neg": 575,
+      "settled": 535,
+      "wrong": 113,
+      "recall": 0.47,
+      "fp": 0.17
+    },
+    "K3_proof": {
+      "trusted": true,
+      "cases": 548,
+      "pos": 11,
+      "neg": 537,
+      "settled": 544,
+      "wrong": 21,
+      "recall": 1,
+      "fp": 0.04
+    },
+    "K4_superlative": {
+      "trusted": false,
+      "cases": 611,
+      "pos": 17,
+      "neg": 594,
+      "settled": 603,
+      "wrong": 14,
+      "recall": 0.35,
+      "fp": 0.01
+    },
+    "K5_urgency": {
+      "trusted": true,
+      "cases": 548,
+      "pos": 9,
+      "neg": 539,
+      "settled": 535,
+      "wrong": 6,
+      "recall": 0.89,
+      "fp": 0.01
+    },
+    "K7_generic": {
+      "trusted": false,
+      "cases": 541,
+      "pos": 2,
+      "neg": 539,
+      "settled": 350,
+      "wrong": 100,
+      "recall": 1,
+      "fp": 0.19
+    },
+    "K8_error": {
+      "trusted": true,
+      "cases": 22,
+      "pos": 11,
+      "neg": 11,
+      "settled": 22,
+      "wrong": 0,
+      "recall": 1,
+      "fp": 0
+    },
+    "K9_asks": {
+      "trusted": false,
+      "cases": 18,
+      "pos": 10,
+      "neg": 8,
+      "settled": 17,
+      "wrong": 2,
+      "recall": 1,
+      "fp": 0.25
+    },
+    "S23_names": {
+      "trusted": false,
+      "cases": 299,
+      "pos": 10,
+      "neg": 289,
+      "settled": 297,
+      "wrong": 10,
+      "recall": 0,
+      "fp": 0
+    },
+    "S24_meaning": {
+      "trusted": false,
+      "cases": 693,
+      "pos": 9,
+      "neg": 684,
+      "settled": 593,
+      "wrong": 11,
+      "recall": 0.33,
+      "fp": 0.01
+    },
+    "S25_both_sides": {
+      "trusted": true,
+      "cases": 532,
+      "pos": 10,
+      "neg": 522,
+      "settled": 525,
+      "wrong": 2,
+      "recall": 1,
+      "fp": 0
+    },
+    "S26_buried": {
+      "trusted": false,
+      "cases": 163,
+      "pos": 0,
+      "neg": 163,
+      "settled": 117,
+      "wrong": 20,
+      "recall": null,
+      "fp": 0.12
+    },
+    "S27_reversal": {
+      "trusted": false,
+      "cases": 1004,
+      "pos": 11,
+      "neg": 993,
+      "settled": 987,
+      "wrong": 18,
+      "recall": 0.64,
+      "fp": 0.01
+    },
+    "S28_orbit": {
+      "trusted": false,
+      "cases": 242,
+      "pos": 2,
+      "neg": 240,
+      "settled": 216,
+      "wrong": 3,
+      "recall": 0,
+      "fp": 0.01
+    },
+    "S30_echo": {
+      "trusted": false,
+      "cases": 316,
+      "pos": 13,
+      "neg": 303,
+      "settled": 215,
+      "wrong": 21,
+      "recall": 0.46,
+      "fp": 0.06
+    },
+    "S31_known": {
+      "trusted": false,
+      "cases": 984,
+      "pos": 11,
+      "neg": 973,
+      "settled": 974,
+      "wrong": 7,
+      "recall": 0.45,
+      "fp": 0
+    },
+    "S31_restate": {
+      "trusted": false,
+      "cases": 984,
+      "pos": 2,
+      "neg": 982,
+      "settled": 847,
+      "wrong": 55,
+      "recall": 0.5,
+      "fp": 0.05
+    },
+    "S32_kicker": {
+      "trusted": false,
+      "cases": 418,
+      "pos": 0,
+      "neg": 418,
+      "settled": 351,
+      "wrong": 3,
+      "recall": null,
+      "fp": 0.01
+    },
+    "S8_withheld": {
+      "trusted": false,
+      "cases": 20,
+      "pos": 11,
+      "neg": 9,
+      "settled": 20,
+      "wrong": 3,
+      "recall": 0.73,
+      "fp": 0
+    },
+    "X2_change": {
+      "trusted": false,
+      "cases": 375,
+      "pos": 8,
+      "neg": 367,
+      "settled": 346,
+      "wrong": 38,
+      "recall": 0.63,
+      "fp": 0.1
+    },
+    "guard.dropped": {
+      "trusted": false,
+      "cases": 63,
+      "pos": 2,
+      "neg": 61,
+      "settled": 54,
+      "wrong": 4,
+      "recall": 0,
+      "fp": 0.03
+    },
+    "guard.supports": {
+      "trusted": false,
+      "cases": 55,
+      "pos": 1,
+      "neg": 54,
+      "settled": 47,
+      "wrong": 0,
+      "recall": 1,
+      "fp": 0
+    },
+    "leave.H3": {
+      "trusted": false,
+      "cases": 2,
+      "pos": 0,
+      "neg": 2,
+      "settled": 2,
+      "wrong": 0,
+      "recall": null,
+      "fp": 0
+    },
+    "leave.S15": {
+      "trusted": false,
+      "cases": 170,
+      "pos": 138,
+      "neg": 32,
+      "settled": 107,
+      "wrong": 18,
+      "recall": 0.61,
+      "fp": 0.19
+    },
+    "leave.S9": {
+      "trusted": false,
+      "cases": 3,
+      "pos": 0,
+      "neg": 3,
+      "settled": 3,
+      "wrong": 0,
+      "recall": null,
+      "fp": 0
+    },
+    "leave.W1": {
+      "trusted": false,
+      "cases": 5,
+      "pos": 1,
+      "neg": 4,
+      "settled": 4,
+      "wrong": 0,
+      "recall": 0,
+      "fp": 0
+    },
+    "leave.W2": {
+      "trusted": false,
+      "cases": 17,
+      "pos": 7,
+      "neg": 10,
+      "settled": 10,
+      "wrong": 3,
+      "recall": 0.29,
+      "fp": 0
+    },
+    "leave.W5": {
+      "trusted": false,
+      "cases": 16,
+      "pos": 4,
+      "neg": 12,
+      "settled": 12,
+      "wrong": 2,
+      "recall": 0,
+      "fp": 0
+    },
+    "register": {
+      "trusted": true,
+      "cases": 377,
+      "pos": 377,
+      "neg": 0,
+      "settled": 366,
+      "wrong": 16,
+      "recall": 0.93,
+      "fp": null
+    }
+  },
+  "baselines": {
+    "essay": {
+      "human": {
+        "median": 0,
+        "p90": 0,
+        "docs": 13
+      },
+      "ai": {
+        "median": 0,
+        "p90": 0,
+        "docs": 17
+      },
+      "human_all": {
+        "median": 2.7,
+        "p90": 6.64,
+        "docs": 13
+      },
+      "ai_all": {
+        "median": 3.17,
+        "p90": 6.74,
+        "docs": 17
+      },
+      "regex_human": {
+        "median": 6.41,
+        "p90": 15.45,
+        "docs": 13
+      },
+      "regex_ai": {
+        "median": 8.42,
+        "p90": 43.56,
+        "docs": 17
+      }
+    },
+    "docs": {
+      "human": {
+        "median": 0,
+        "p90": 0,
+        "docs": 18
+      },
+      "ai": {
+        "median": 0,
+        "p90": 0,
+        "docs": 13
+      },
+      "human_all": {
+        "median": 1.37,
+        "p90": 6.73,
+        "docs": 18
+      },
+      "ai_all": {
+        "median": 0,
+        "p90": 4.78,
+        "docs": 13
+      },
+      "regex_human": {
+        "median": 2.03,
+        "p90": 18.07,
+        "docs": 18
+      },
+      "regex_ai": {
+        "median": 0,
+        "p90": 13.11,
+        "docs": 13
+      }
+    },
+    "landing": {
+      "human": {
+        "median": 1.02,
+        "p90": 3.8,
+        "docs": 15
+      },
+      "ai": {
+        "median": 0,
+        "p90": 5.59,
+        "docs": 19
+      },
+      "human_all": {
+        "median": 14.59,
+        "p90": 28.03,
+        "docs": 15
+      },
+      "ai_all": {
+        "median": 15.33,
+        "p90": 28.21,
+        "docs": 19
+      },
+      "regex_human": {
+        "median": 14.13,
+        "p90": 35.51,
+        "docs": 15
+      },
+      "regex_ai": {
+        "median": 15.67,
+        "p90": 41.51,
+        "docs": 19
+      }
+    },
+    "store": {
+      "human": {
+        "median": 0,
+        "p90": 2.51,
+        "docs": 9
+      },
+      "ai": {
+        "median": 0,
+        "p90": 3.69,
+        "docs": 17
+      },
+      "human_all": {
+        "median": 6.1,
+        "p90": 24.59,
+        "docs": 9
+      },
+      "ai_all": {
+        "median": 3.45,
+        "p90": 11.07,
+        "docs": 17
+      },
+      "regex_human": {
+        "median": 5.41,
+        "p90": 37.83,
+        "docs": 9
+      },
+      "regex_ai": {
+        "median": 15.63,
+        "p90": 24,
+        "docs": 17
+      }
+    },
+    "release": {
+      "human": {
+        "median": 0,
+        "p90": 0,
+        "docs": 16
+      },
+      "ai": {
+        "median": 0,
+        "p90": 0,
+        "docs": 16
+      },
+      "human_all": {
+        "median": 5.28,
+        "p90": 28.57,
+        "docs": 16
+      },
+      "ai_all": {
+        "median": 10.52,
+        "p90": 34.09,
+        "docs": 16
+      },
+      "regex_human": {
+        "median": 12.24,
+        "p90": 48.78,
+        "docs": 16
+      },
+      "regex_ai": {
+        "median": 0,
+        "p90": 18.52,
+        "docs": 16
+      }
+    }
+  }
+}

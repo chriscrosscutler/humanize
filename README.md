@@ -123,7 +123,7 @@ In GitHub Actions, each hit becomes an annotation on its line in the pull reques
 ```yaml
 - uses: actions/checkout@v4
   with: { fetch-depth: 0 }
-- uses: chriscrosscutler/humanize@v1.1.0
+- uses: chriscrosscutler/humanize@v1.2.0
   with:
     paths: site docs README.md
     commits: origin/main..HEAD
@@ -134,11 +134,48 @@ with `pre-commit install --hook-type commit-msg`):
 
 ```yaml
 - repo: https://github.com/chriscrosscutler/humanize
-  rev: v1.1.0
+  rev: v1.2.0
   hooks:
     - id: humanize
     - id: humanize-commit-msg
 ```
+
+## Judgment checks with Jev
+
+Some tells take judgment: an opening that buries its point, a store listing whose first lines
+never say what the app does, an error message with no next step. With `--judge`, the scanner
+asks [TypeSafe's Jev model](https://docs.typesafe.ai) these as yes-or-no questions and gets a
+probability back. Code reads 0.7 and above as yes and 0.3 and below as no, and Claude reads
+anything between. Each pick-one question is asked twice with the options reversed, and a split
+answer also goes to Claude.
+
+```bash
+node scripts/scan.mjs --judge --register store fastlane/metadata/en-US/description.txt
+```
+
+- **What acts.** Only checks that passed a stress run on 391 held-out documents: K3 crowd
+  claims, K5 deadlines, K8 errors, K10 store openings, S25 closings that decline to pick, and the
+  register of pasted text. The rest show as info with `--jev-untrusted`. The numbers and their
+  limits are in [references/sources.md](references/sources.md#jev-stress-run).
+- **Fact guard.** `node scripts/guard.mjs compare <original> <rewrite>` checks that a rewrite
+  added no number, link, name or code span: an added one is a K6 block hit. With
+  `--jev-untrusted` it also asks Jev, sentence by sentence, whether the original makes each
+  claim; those rows are leads to check until the questions pass the stress run.
+- **Claim evidence.** `node scripts/guard.mjs evidence <file> --root <repo> --jev-untrusted`
+  finds the code and docs behind each claim in a landing page, store listing or release note,
+  skipping other copy, and reports the claims with nothing behind them. Its questions have not
+  passed the stress run yet, so each row is a lead to check by reading the snippet.
+- **What is sent.** The copy being judged, in sections of up to about 4,000 tokens, plus the
+  matched snippets for `evidence`. Legal, commit, PR, comment and chat text is never sent. The
+  hook, the Action and pre-commit never call Jev.
+- **Key and cost.** `TYPESAFE_API_KEY` from the environment or the macOS keychain. Under $0.002
+  per 1,000 words, or $0.01 with `--jev-untrusted`. `--jev-budget` caps a run (default $0.05),
+  and answers are cached in `~/.cache/humanize/jev`.
+- **Off.** `--no-jev`, `HUMANIZE_JEV=0` or `"jev": false` in `.humanize.json`. Without a key the
+  scan runs as before and adds a `jev: no_key` row.
+- **Limits.** The stress run's AI store and release drafts come from Claude models only, and
+  email, social and ui text was tested on synthetic cases only. A failed call means "not
+  checked", never "no".
 
 ## Compared with other humanizers
 
@@ -146,7 +183,7 @@ Checked November 1, 2026, against the three most-starred humanizer skills on Git
 
 | | humanize | [humanizer](https://github.com/blader/humanizer) | [stop-slop](https://github.com/hardikpandya/stop-slop) | [avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing) |
 |---|---|---|---|---|
-| Catalog | 103 rules and 16 judgment checks | 26 patterns | One page of rules | 74 pattern categories |
+| Catalog | 103 rules and 20 judgment checks | 26 patterns | One page of rules | 74 pattern categories |
 | Scanner that runs without a model | Node, no dependencies | No | No | An npm package |
 | Rules change with the surface | 14 registers, read from the file path | No | No | Context profiles |
 | CI gate | GitHub Action, pre-commit, exit codes | No | No | GitHub Action, pre-commit |
@@ -174,13 +211,20 @@ Where the others are better:
 | [`scripts/scan.mjs`](scripts/scan.mjs) | The scanner; `--help` prints the flags |
 | [`scripts/rules.json`](scripts/rules.json) | Every rule's id, pattern and tier per register |
 | [`scripts/hook.mjs`](scripts/hook.mjs) | The PostToolUse hook |
-| [`tests/`](tests) | Scanner, rules, hook and catalog drift tests, with fixtures |
+| [`scripts/judge.mjs`](scripts/judge.mjs), [`judge.json`](scripts/judge.json) | The Jev questions, thresholds and the code that asks them |
+| [`scripts/jev.mjs`](scripts/jev.mjs) | The Jev client: key lookup, retries, budget and cache |
+| [`scripts/guard.mjs`](scripts/guard.mjs) | Fact guard, claim evidence and pick |
+| [`scripts/jev-trust.json`](scripts/jev-trust.json) | Which checks act, and the baselines per register, from the stress run |
+| [`evals/jev/`](evals/jev) | The stress run, its report and the corpus manifest (ids and URLs, no text) |
+| [`tests/`](tests) | Scanner, rules, hook, Jev and catalog drift tests, with fixtures and recorded Jev answers |
 
 ## Tests
 
 ```bash
 node --test
 ```
+
+The tests run offline on recorded Jev answers; no key or network is needed.
 
 The catalog test fails when `references/patterns.md` and `scripts/rules.json` drift apart.
 
